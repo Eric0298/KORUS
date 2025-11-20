@@ -74,7 +74,7 @@ const loginEntrenador = async(req, res)=>{
     if(!esCorrecta){
       return res.status(400).json({mensaje: "Contraseña incorrecta"})
     }
-    entrenador.ultimoAcceso = newDate();
+    entrenador.ultimoAcceso = new Date();
     await entrenador.save();
     const token = jwt.sign(
       {id:entrenador._id},
