@@ -3,18 +3,31 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 
+const authRoutes = require("./routes/authRoutes");          
+const verificarToken = require("./middleware/authMiddleware");
+const clienteRoutes = require("./routes/clienteRoutes");
+
 dotenv.config();
 
 const app = express();
 connectDB();
+
 // Middlewares básicos
 app.use(cors());
 app.use(express.json());
 
-// Ruta de prueba
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "KORUS API funcionando ✅" });
+// Rutas públicas
+app.use("/api/auth", authRoutes);                          
+// Ruta protegida de prueba (perfil)
+app.get("/api/entrenador/perfil", verificarToken, (req, res) => {
+  res.json({
+    mensaje: "Perfil del entrenador autenticado",
+    entrenador: req.entrenador,
+  });
 });
+
+// Rutas protegidas de clientes
+app.use("/api/clientes", clienteRoutes);
 
 // Puerto
 const PORT = process.env.PORT || 5000;

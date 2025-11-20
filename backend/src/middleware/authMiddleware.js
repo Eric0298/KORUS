@@ -8,7 +8,7 @@ const verificarToken = async(req, res, next)=>{
         }
         const token = authHeader.split(" ")[1];
         const decoded = jwt.verify(token,process.env.JWT_SECRET);
-        const entrenador = await Entrenador.findById(decoded.id).select(".contrasena");
+        const entrenador = await Entrenador.findById(decoded.id).select("-contrasena");
         if(!entrenador){
             return res.status(404).json({mensaje: "Entrenador no encontrado" });
         }

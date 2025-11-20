@@ -81,7 +81,6 @@ const entrenadorSchema = new mongoose.Schema(
   }
 );
 
-entrenadorSchema.index({ correo: 1 }); 
 entrenadorSchema.index({ plan: 1, estado: 1 }); 
 
 module.exports = mongoose.model("Entrenador", entrenadorSchema);
