@@ -264,6 +264,5 @@ clienteSchema.pre("save", function (next) {
 clienteSchema.index({ entrenadorId: 1, estado: 1 });
 clienteSchema.index({ entrenadorId: 1, nombreMostrar: 1 });
 clienteSchema.index({ entrenadorId: 1, objetivoPrincipal: 1 });
-clienteSchema.index({ etiquetas: 1 });
 
 module.exports = mongoose.model("Cliente", clienteSchema);
