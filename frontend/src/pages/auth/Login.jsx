@@ -7,13 +7,14 @@ export default function Login(){
     const [correo, setCorreo] = useState("");
     const [contrasena, setContrasena] = useState("");
     const [mensajeError, setMensajeError] = useState("");
-
+    const [cargando, setCargando] = useState(false);
     const {login} = useContext(AuthContext);
     const navigate = useNavigate();
 
     const handleSubmit = async(e)=>{
         e.preventDefault();
         setMensajeError("");
+        setCargando(true);
         try {
             const data = await loginRequest(correo, contrasena);
             login(data.token, data.entrenador);
@@ -21,6 +22,8 @@ export default function Login(){
         } catch (error) {
             console.error(error);
             setMensajeError(error.response?.data?.mensaje|| "Error al iniciar sesion");
+        }finally{
+          setCargando(false);
         }
     };
     return(
@@ -55,9 +58,14 @@ export default function Login(){
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded text-sm font-semibold hover:bg-blue-700"
+          disabled={cargando} 
+          className={`w-full py-2 rounded text-sm font-semibold text-white ${
+            cargando
+              ? "bg-blue-300 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          Entrar
+          {cargando ? "Entrando..." : "Entrar"} 
         </button>
       </form>
     </div> 

@@ -42,7 +42,6 @@ export default function AppLayout({ children }) {
             {nombre}
           </span>
 
-          {/* Avatar simple por ahora (inicial). Más adelante lo cambiamos a foto real */}
           <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
             {inicial}
           </div>
@@ -56,7 +55,6 @@ export default function AppLayout({ children }) {
         </div>
       </header>
 
-      {/* CONTENIDO PRINCIPAL */}
       <main className="flex-1 p-4 md:p-6">{children}</main>
     </div>
   );

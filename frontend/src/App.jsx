@@ -3,7 +3,8 @@ import Login from "./pages/auth/Login";
 import PrivateRoute from "./components/layout/PrivateRoute";
 import AppLayout from "./components/layout/AppLayout";
 import ClientesPage from "./pages/clientes/ClientesPage";
-
+import RutinasPage from "./pages/rutinas/RutinasPage";
+import EjerciciosPage from "./pages/ejercicios/EjerciciosPage";
 function Dashboard() {
   return (
     <AppLayout>
@@ -43,16 +44,12 @@ function App() {
           }
         />
 
-        {/* De momento rutinas/ejercicios serán placeholders */}
         <Route
           path="/rutinas"
           element={
             <PrivateRoute>
               <AppLayout>
-                <h1 className="text-xl font-bold">Rutinas</h1>
-                <p className="text-sm text-slate-600">
-                  Aquí montaremos la gestión de rutinas.
-                </p>
+                <RutinasPage />
               </AppLayout>
             </PrivateRoute>
           }
@@ -63,10 +60,7 @@ function App() {
           element={
             <PrivateRoute>
               <AppLayout>
-                <h1 className="text-xl font-bold">Ejercicios</h1>
-                <p className="text-sm text-slate-600">
-                  Aquí montaremos el catálogo de ejercicios.
-                </p>
+               <EjerciciosPage />
               </AppLayout>
             </PrivateRoute>
           }
