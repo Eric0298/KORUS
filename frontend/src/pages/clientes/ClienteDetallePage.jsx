@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+
 import {
   obtenerClientePorId,
   actualizarClienteRequest,
   eliminarClienteRequest,
 } from "../../services/clientesService";
+
+import {
+  obtenerRutinas,
+  asignarRutinaAClienteRequest,
+  quitarRutinaActivaRequest,
+} from "../../services/rutinasService";
+
 import ClienteCard from "../../components/clientes/ClienteCard";
 
 export default function ClienteDetallePage() {
@@ -15,64 +23,53 @@ export default function ClienteDetallePage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
+  // 👉 estados para edición
   const [nombre, setNombre] = useState("");
   const [objetivoPrincipal, setObjetivoPrincipal] = useState("salud_general");
   const [nivelGeneral, setNivelGeneral] = useState("principiante");
   const [notas, setNotas] = useState("");
-
-  const [pesoInicialKg, setPesoInicialKg] = useState("");
-  const [pesoActualKg, setPesoActualKg] = useState("");
-  const [alturaCm, setAlturaCm] = useState("");
-  const [porcentajeGrasa, setPorcentajeGrasa] = useState("");
-  const [frecuenciaCardiacaReposo, setFrecuenciaCardiacaReposo] = useState("");
-
-  
-  const [frecuenciaSemanalDeseada, setFrecuenciaSemanalDeseada] = useState("");
-  const [materialDisponibleTexto, setMaterialDisponibleTexto] = useState("");
-  const [ubicacionesTexto, setUbicacionesTexto] = useState("");
-  const [limitacionesTexto, setLimitacionesTexto] = useState("");
-  const [deportesPreferidosTexto, setDeportesPreferidosTexto] = useState("");
-
   const [guardando, setGuardando] = useState(false);
+
   const [mensajeExito, setMensajeExito] = useState("");
   const [eliminando, setEliminando] = useState(false);
+
+  const [rutinas, setRutinas] = useState([]);
+  const [rutinaSeleccionada, setRutinaSeleccionada] = useState("");
+  const [asignandoRutina, setAsignandoRutina] = useState(false);
+  const [quitandoRutina, setQuitandoRutina] = useState(false);
 
   useEffect(() => {
     const cargar = async () => {
       try {
         setCargando(true);
-        const data = await obtenerClientePorId(id);
-        const cli = data.cliente;
+        setError("");
+        setMensajeExito("");
+
+        // Cargamos cliente + rutinas en paralelo
+        const [dataCliente, dataRutinas] = await Promise.all([
+          obtenerClientePorId(id),
+          obtenerRutinas(),
+        ]);
+
+        const cli = dataCliente.cliente;
         setCliente(cli);
 
-        // ---- Inicializar formulario de edición ----
-        const nombreCompleto =
+        // inicializar formulario
+        const nombreInicial =
           cli.nombreMostrar ||
           [cli.nombre, cli.apellidos].filter(Boolean).join(" ");
 
-        setNombre(nombreCompleto);
+        setNombre(nombreInicial);
         setObjetivoPrincipal(cli.objetivoPrincipal || "salud_general");
         setNivelGeneral(cli.nivelGeneral || "principiante");
         setNotas(cli.notas || "");
 
-        // Métricas físicas
-        setPesoInicialKg(cli.pesoInicialKg ?? "");
-        setPesoActualKg(cli.pesoActualKg ?? "");
-        setAlturaCm(cli.alturaCm ?? "");
-        setPorcentajeGrasa(cli.porcentajeGrasa ?? "");
-        setFrecuenciaCardiacaReposo(cli.frecuenciaCardiacaReposo ?? "");
+        const listaRutinas = dataRutinas.rutinas || [];
+        setRutinas(listaRutinas);
 
-        // Preferencias
-        const pref = cli.preferencias || {};
-        setFrecuenciaSemanalDeseada(pref.frecuenciaSemanalDeseada ?? "");
-        setMaterialDisponibleTexto(
-          (pref.materialDisponible || []).join(", ")
-        );
-        setUbicacionesTexto((pref.ubicacionesEntrenamiento || []).join(", "));
-        setLimitacionesTexto((pref.limitaciones || []).join(", "));
-        setDeportesPreferidosTexto(
-          (pref.deportesPreferidos || []).join(", ")
-        );
+        if (cli.rutinaActiva) {
+          setRutinaSeleccionada(cli.rutinaActiva);
+        }
       } catch (err) {
         console.error(err);
         setError("Error al cargar el cliente");
@@ -83,20 +80,6 @@ export default function ClienteDetallePage() {
 
     cargar();
   }, [id]);
-
-  const parseNumberOrNull = (valor) => {
-    if (valor === "" || valor === null || valor === undefined) return undefined;
-    const num = Number(valor);
-    return Number.isNaN(num) ? undefined : num;
-  };
-
-  const parseLista = (texto) => {
-    if (!texto) return [];
-    return texto
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-  };
 
   const handleGuardarCambios = async (e) => {
     e.preventDefault();
@@ -111,20 +94,10 @@ export default function ClienteDetallePage() {
     try {
       setGuardando(true);
 
-      // Partimos nombre completo en nombre + apellidos (simple)
+      // Partimos el nombre en nombre + apellidos de forma sencilla
       const partes = nombre.trim().split(" ");
       const nombreSolo = partes.shift();
       const apellidos = partes.join(" ");
-
-      const preferenciasPayload = {
-        frecuenciaSemanalDeseada: parseNumberOrNull(
-          frecuenciaSemanalDeseada
-        ),
-        materialDisponible: parseLista(materialDisponibleTexto),
-        ubicacionesEntrenamiento: parseLista(ubicacionesTexto),
-        limitaciones: parseLista(limitacionesTexto),
-        deportesPreferidos: parseLista(deportesPreferidosTexto),
-      };
 
       const payload = {
         nombre: nombreSolo,
@@ -133,27 +106,15 @@ export default function ClienteDetallePage() {
         objetivoPrincipal,
         nivelGeneral,
         notas,
-
-        // métricas físicas
-        pesoInicialKg: parseNumberOrNull(pesoInicialKg),
-        pesoActualKg: parseNumberOrNull(pesoActualKg),
-        alturaCm: parseNumberOrNull(alturaCm),
-        porcentajeGrasa: parseNumberOrNull(porcentajeGrasa),
-        frecuenciaCardiacaReposo: parseNumberOrNull(
-          frecuenciaCardiacaReposo
-        ),
-
-        // preferencias
-        preferencias: preferenciasPayload,
       };
 
       const data = await actualizarClienteRequest(id, payload);
       setCliente(data.cliente);
-      setMensajeExito("Cambios guardados correctamente ");
+      setMensajeExito("Cambios guardados correctamente ✅");
     } catch (err) {
       console.error(err);
       setError(
-        err.response?.data?.mensaje || "Error al guardar los cambios del cliente"
+        err.response?.data?.mensaje || "Error al guardar los cambios"
       );
     } finally {
       setGuardando(false);
@@ -177,11 +138,66 @@ export default function ClienteDetallePage() {
     }
   };
 
+  const handleAsignarRutina = async (e) => {
+    e.preventDefault();
+    if (!rutinaSeleccionada) return;
+
+    try {
+      setAsignandoRutina(true);
+      setMensajeExito("");
+      setError("");
+
+      const data = await asignarRutinaAClienteRequest(
+        rutinaSeleccionada,
+        id
+      );
+
+      setCliente(data.cliente);
+      setMensajeExito("Rutina asignada correctamente ✅");
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.response?.data?.mensaje ||
+          "Error al asignar la rutina al cliente"
+      );
+    } finally {
+      setAsignandoRutina(false);
+    }
+  };
+
+  const handleQuitarRutina = async () => {
+    if (!cliente?.rutinaActiva) return;
+
+    const ok = window.confirm(
+      "¿Seguro que quieres quitar la rutina activa de este cliente?"
+    );
+    if (!ok) return;
+
+    try {
+      setQuitandoRutina(true);
+      setMensajeExito("");
+      setError("");
+
+      const data = await quitarRutinaActivaRequest(id);
+      setCliente(data.cliente);
+      setRutinaSeleccionada("");
+      setMensajeExito("Rutina activa eliminada del cliente ✅");
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.response?.data?.mensaje ||
+          "Error al quitar la rutina activa del cliente"
+      );
+    } finally {
+      setQuitandoRutina(false);
+    }
+  };
+
   if (cargando) {
     return <p>Cargando cliente...</p>;
   }
 
-  if (error) {
+  if (error && !cliente) {
     return (
       <div className="space-y-4">
         <p className="text-red-600 text-sm">{error}</p>
@@ -233,8 +249,8 @@ export default function ClienteDetallePage() {
         <ClienteCard cliente={cliente} />
       </div>
 
-      {/*  Bloque de edición completa */}
-      <section className="bg-white rounded-xl shadow p-4 space-y-4 max-w-3xl">
+      {/* Bloque de edición rápida */}
+      <section className="bg-white rounded-xl shadow p-4 space-y-3 max-w-xl">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-lg">Editar cliente</h2>
           <button
@@ -256,19 +272,18 @@ export default function ClienteDetallePage() {
           <p className="text-green-600 text-sm">{mensajeExito}</p>
         )}
 
-        <form onSubmit={handleGuardarCambios} className="space-y-4 text-sm">
-          {/* Datos básicos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="md:col-span-2">
-              <label className="block mb-1">Nombre completo</label>
-              <input
-                type="text"
-                className="w-full border rounded p-2"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-              />
-            </div>
+        <form onSubmit={handleGuardarCambios} className="space-y-3 text-sm">
+          <div>
+            <label className="block mb-1">Nombre completo</label>
+            <input
+              type="text"
+              className="w-full border rounded p-2"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+            />
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block mb-1">Objetivo principal</label>
               <select
@@ -303,133 +318,6 @@ export default function ClienteDetallePage() {
             </div>
           </div>
 
-          {/* Métricas físicas */}
-          <div>
-            <h3 className="font-semibold mb-2">Métricas físicas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              <div>
-                <label className="block mb-1">Peso inicial (kg)</label>
-                <input
-                  type="number"
-                  className="w-full border rounded p-2"
-                  value={pesoInicialKg}
-                  onChange={(e) => setPesoInicialKg(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block mb-1">Peso actual (kg)</label>
-                <input
-                  type="number"
-                  className="w-full border rounded p-2"
-                  value={pesoActualKg}
-                  onChange={(e) => setPesoActualKg(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block mb-1">Altura (cm)</label>
-                <input
-                  type="number"
-                  className="w-full border rounded p-2"
-                  value={alturaCm}
-                  onChange={(e) => setAlturaCm(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block mb-1">% Grasa</label>
-                <input
-                  type="number"
-                  className="w-full border rounded p-2"
-                  value={porcentajeGrasa}
-                  onChange={(e) => setPorcentajeGrasa(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block mb-1">FC reposo (bpm)</label>
-                <input
-                  type="number"
-                  className="w-full border rounded p-2"
-                  value={frecuenciaCardiacaReposo}
-                  onChange={(e) =>
-                    setFrecuenciaCardiacaReposo(e.target.value)
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Preferencias */}
-          <div>
-            <h3 className="font-semibold mb-2">Preferencias</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block mb-1">
-                  Frecuencia semanal deseada (sesiones)
-                </label>
-                <input
-                  type="number"
-                  className="w-full border rounded p-2"
-                  value={frecuenciaSemanalDeseada}
-                  onChange={(e) =>
-                    setFrecuenciaSemanalDeseada(e.target.value)
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1">
-                  Material disponible (separado por comas)
-                </label>
-                <input
-                  type="text"
-                  className="w-full border rounded p-2"
-                  value={materialDisponibleTexto}
-                  onChange={(e) =>
-                    setMaterialDisponibleTexto(e.target.value)
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1">
-                  Ubicaciones entrenamiento (separadas por comas)
-                </label>
-                <input
-                  type="text"
-                  className="w-full border rounded p-2"
-                  value={ubicacionesTexto}
-                  onChange={(e) => setUbicacionesTexto(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1">
-                  Limitaciones / lesiones (separadas por comas)
-                </label>
-                <input
-                  type="text"
-                  className="w-full border rounded p-2"
-                  value={limitacionesTexto}
-                  onChange={(e) => setLimitacionesTexto(e.target.value)}
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block mb-1">
-                  Deportes preferidos (separados por comas)
-                </label>
-                <input
-                  type="text"
-                  className="w-full border rounded p-2"
-                  value={deportesPreferidosTexto}
-                  onChange={(e) =>
-                    setDeportesPreferidosTexto(e.target.value)
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Notas */}
           <div>
             <label className="block mb-1">Notas del entrenador</label>
             <textarea
@@ -454,7 +342,67 @@ export default function ClienteDetallePage() {
         </form>
       </section>
 
-      {/* Sección: datos básicos (solo lectura de momento, sincronizados) */}
+      {/* Bloque: Asignar rutina activa */}
+      <section className="bg-white rounded-xl shadow p-4 space-y-3 max-w-xl">
+        <h2 className="font-semibold text-lg">Rutina activa</h2>
+
+        <p className="text-xs text-slate-600">
+          Asigna una de tus rutinas a este cliente como rutina actual.
+        </p>
+
+        {/* Usamos los mismos mensajes de error/éxito */}
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {mensajeExito && (
+          <p className="text-green-600 text-sm">{mensajeExito}</p>
+        )}
+
+        <form onSubmit={handleAsignarRutina} className="space-y-3 text-sm">
+          <div>
+            <label className="block mb-1">Seleccionar rutina</label>
+            <select
+              className="w-full border rounded p-2"
+              value={rutinaSeleccionada || ""}
+              onChange={(e) => setRutinaSeleccionada(e.target.value)}
+            >
+              <option value="">-- Sin rutina --</option>
+              {rutinas.map((r) => (
+                <option key={r._id} value={r._id}>
+                  {r.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={!rutinaSeleccionada || asignandoRutina}
+              className={`px-4 py-2 rounded text-xs text-white ${
+                !rutinaSeleccionada || asignandoRutina
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {asignandoRutina ? "Asignando..." : "Asignar rutina activa"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleQuitarRutina}
+              disabled={!cliente.rutinaActiva || quitandoRutina}
+              className={`px-4 py-2 rounded text-xs border ${
+                !cliente.rutinaActiva || quitandoRutina
+                  ? "border-slate-200 text-slate-300 cursor-not-allowed"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
+              }`}
+            >
+              {quitandoRutina ? "Quitando..." : "Quitar rutina activa"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {/* Sección: datos básicos */}
       <section className="bg-white rounded-xl shadow p-4 space-y-2">
         <h2 className="font-semibold text-lg mb-1">Datos básicos</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700">
@@ -473,13 +421,12 @@ export default function ClienteDetallePage() {
               : "-"}
           </p>
           <p>
-            <span className="font-medium">Sexo:</span>{" "}
-            {cliente.sexo || "-"}
+            <span className="font-medium">Sexo:</span> {cliente.sexo || "-"}
           </p>
         </div>
       </section>
 
-      {/* Sección: métricas físicas (solo display) */}
+      {/* Sección: métricas físicas */}
       <section className="bg-white rounded-xl shadow p-4 space-y-2">
         <h2 className="font-semibold text-lg mb-1">Métricas físicas</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm text-slate-700">
@@ -510,7 +457,7 @@ export default function ClienteDetallePage() {
         </div>
       </section>
 
-      {/* Sección: preferencias (solo display) */}
+      {/* Sección: preferencias */}
       <section className="bg-white rounded-xl shadow p-4 space-y-2">
         <h2 className="font-semibold text-lg mb-1">Preferencias</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700">
@@ -547,12 +494,10 @@ export default function ClienteDetallePage() {
             {experienciaDeportiva.map((exp, idx) => (
               <li key={idx} className="border rounded p-2">
                 <p>
-                  <span className="font-medium">Deporte:</span>{" "}
-                  {exp.deporte}
+                  <span className="font-medium">Deporte:</span> {exp.deporte}
                 </p>
                 <p>
-                  <span className="font-medium">Nivel:</span>{" "}
-                  {exp.nivel}
+                  <span className="font-medium">Nivel:</span> {exp.nivel}
                 </p>
                 <p>
                   <span className="font-medium">Años experiencia:</span>{" "}
@@ -574,7 +519,7 @@ export default function ClienteDetallePage() {
         )}
       </section>
 
-      {/* Sección: notas (display) */}
+      {/* Sección: notas */}
       <section className="bg-white rounded-xl shadow p-4 space-y-2">
         <h2 className="font-semibold text-lg mb-1">Notas del entrenador</h2>
         <p className="text-sm text-slate-700">

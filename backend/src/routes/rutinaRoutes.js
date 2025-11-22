@@ -8,6 +8,8 @@ const {
   obtenerRutina,
   actualizarRutina,
   archivarRutina,
+  asignarRutinaACliente,
+  quitarRutinaActivaDeCliente,
 } = require("../controllers/rutinaController");
 
 router.use(verificarToken);
@@ -21,5 +23,9 @@ router.get("/:id", obtenerRutina);
 router.put("/:id", actualizarRutina);
 
 router.delete("/:id", archivarRutina);
+
+router.post("/:rutinaId/asignar/:clienteId", asignarRutinaACliente);
+
+router.post("/quitar-de-cliente/:clienteId", quitarRutinaActivaDeCliente);
 
 module.exports = router;

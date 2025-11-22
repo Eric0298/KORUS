@@ -19,3 +19,11 @@ export const eliminarRutinaRequest = async (id) => {
   const res = await api.delete(`/rutinas/${id}`);
   return res.data;
 };
+export const asignarRutinaAClienteRequest = async (rutinaId, clienteId) => {
+  const res = await api.post(`/rutinas/${rutinaId}/asignar/${clienteId}`);
+  return res.data;
+};
+export const quitarRutinaActivaRequest = async (clienteId) => {
+  const res = await api.post(`/rutinas/quitar-de-cliente/${clienteId}`);
+  return res.data; 
+};

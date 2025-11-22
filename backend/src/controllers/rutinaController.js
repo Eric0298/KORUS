@@ -267,6 +267,98 @@ const archivarRutina = async (req, res) => {
     });
   }
 };
+const asignarRutinaACliente = async (req, res) => {
+  try {
+    const entrenadorId = req.entrenador._id;
+    const { rutinaId, clienteId } = req.params;
+
+    const rutina = await Rutina.findOne({
+      _id: rutinaId,
+      entrenadorId,
+      eliminado: false,
+    });
+
+    if (!rutina) {
+      return res.status(404).json({
+        mensaje: "Rutina no encontrada para este entrenador",
+      });
+    }
+
+    const cliente = await Cliente.findOne({
+      _id: clienteId,
+      entrenadorId,
+      eliminado: false,
+    });
+
+    if (!cliente) {
+      return res.status(404).json({
+        mensaje: "Cliente no encontrado para este entrenador",
+      });
+    }
+
+    cliente.rutinaActiva = rutina._id;
+
+    if (!cliente.historialRutinas) {
+      cliente.historialRutinas = [];
+    }
+
+    const yaEnHistorial = cliente.historialRutinas.some(
+      (rId) => rId.toString() === rutina._id.toString()
+    );
+
+    if (!yaEnHistorial) {
+      cliente.historialRutinas.push(rutina._id);
+    }
+
+    await cliente.save();
+
+    return res.json({
+      mensaje: "Rutina asignada como activa al cliente",
+      cliente,
+      rutina,
+    });
+  } catch (error) {
+    console.error("Error en asignarRutinaACliente:", error);
+    return res.status(500).json({
+      mensaje: "Error en el servidor al asignar la rutina",
+      error: error.message,
+    });
+  }
+};
+
+
+const quitarRutinaActivaDeCliente = async (req, res) => {
+  try {
+    const entrenadorId = req.entrenador._id;
+    const { clienteId } = req.params;
+
+    const cliente = await Cliente.findOne({
+      _id: clienteId,
+      entrenadorId,
+      eliminado: false,
+    });
+
+    if (!cliente) {
+      return res.status(404).json({
+        mensaje: "Cliente no encontrado para este entrenador",
+      });
+    }
+
+    cliente.rutinaActiva = null;
+    await cliente.save();
+
+    return res.json({
+      mensaje: "Rutina activa eliminada del cliente",
+      cliente,
+    });
+  } catch (error) {
+    console.error("Error en quitarRutinaActivaDeCliente:", error);
+    return res.status(500).json({
+      mensaje: "Error en el servidor al quitar la rutina activa",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   crearRutina,
@@ -274,4 +366,7 @@ module.exports = {
   obtenerRutina,
   actualizarRutina,
   archivarRutina,
+  asignarRutinaACliente,
+  quitarRutinaActivaDeCliente,
+
 };
