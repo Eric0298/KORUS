@@ -3,11 +3,15 @@ import {
   obtenerClientes,
   crearClienteRequest,
 } from "../../services/clientesService";
+import ClienteCard from "../../components/clientes/ClienteCard";
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+
+  const [mensajeExito, setMensajeExito] = useState("");
+  const [cargandoCrear, setCargandoCrear] = useState(false);
 
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoObjetivo, setNuevoObjetivo] = useState("ganancia_muscular");
@@ -33,9 +37,12 @@ export default function ClientesPage() {
   const handleCrearCliente = async (e) => {
     e.preventDefault();
     setError("");
+    setMensajeExito("");
+    setCargandoCrear(true);
 
     if (!nuevoNombre.trim()) {
       setError("El nombre es obligatorio");
+      setCargandoCrear(false); // 👈 importante: quitar loading si falla validación
       return;
     }
 
@@ -49,11 +56,14 @@ export default function ClientesPage() {
       setNuevoNombre("");
       setNuevoObjetivo("ganancia_muscular");
       setNuevoNivel("principiante");
+      setMensajeExito("Cliente creado correctamente");
 
       await cargarClientes();
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.mensaje || "Error al crear cliente");
+    } finally {
+      setCargandoCrear(false);
     }
   };
 
@@ -61,7 +71,7 @@ export default function ClientesPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Clientes</h1>
 
-      {/* Formulario: crear cliente sencillo */}
+      {/* Formulario crear cliente sencillo */}
       <form
         onSubmit={handleCrearCliente}
         className="bg-white p-4 rounded-lg shadow space-y-4 max-w-xl"
@@ -69,6 +79,9 @@ export default function ClientesPage() {
         <h2 className="font-semibold text-lg">Nuevo cliente</h2>
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
+        {mensajeExito && (
+          <p className="text-green-600 text-sm">{mensajeExito}</p>
+        )}
 
         <div>
           <label className="block text-sm mb-1">Nombre</label>
@@ -114,40 +127,68 @@ export default function ClientesPage() {
           </div>
         </div>
 
-        <button className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-          Crear cliente
+        <button
+          disabled={cargandoCrear}
+          className={`px-4 py-2 rounded text-sm text-white ${
+            cargandoCrear
+              ? "bg-blue-300 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {cargandoCrear ? "Creando..." : "Crear cliente"}
         </button>
       </form>
 
-      {/* Listado de clientes */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h2 className="font-semibold text-lg mb-3">Listado de clientes</h2>
+      {/* Listado de clientes en cards */}
+      <div className="bg-transparent">
+        <h2 className="font-semibold text-lg mb-3">Clientes</h2>
 
         {cargando ? (
           <p>Cargando clientes...</p>
         ) : clientes.length === 0 ? (
           <p className="text-sm text-slate-500">Aún no hay clientes.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="py-2">Nombre</th>
-                <th className="py-2">Objetivo</th>
-                <th className="py-2">Nivel</th>
-                <th className="py-2">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Grid de cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               {clientes.map((c) => (
-                <tr key={c._id} className="border-b last:border-0">
-                  <td className="py-2">{c.nombreMostrar || c.nombre}</td>
-                  <td className="py-2">{c.objetivoPrincipal}</td>
-                  <td className="py-2">{c.nivelGeneral}</td>
-                  <td className="py-2">{c.estado}</td>
-                </tr>
+                <ClienteCard
+                  key={c._id}
+                  cliente={c}
+                  onEliminado={cargarClientes} // 👈 para refrescar tras eliminar
+                />
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Vista tabla (resumen) opcional */}
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold text-sm mb-2">
+                Vista tabla (resumen)
+              </h3>
+              <table className="w-full text-xs md:text-sm">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="py-2">Nombre</th>
+                    <th className="py-2">Objetivo</th>
+                    <th className="py-2">Nivel</th>
+                    <th className="py-2">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clientes.map((c) => (
+                    <tr key={c._id} className="border-b last:border-0">
+                      <td className="py-2">
+                        {c.nombreMostrar || c.nombre}
+                      </td>
+                      <td className="py-2">{c.objetivoPrincipal}</td>
+                      <td className="py-2">{c.nivelGeneral}</td>
+                      <td className="py-2">{c.estado}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

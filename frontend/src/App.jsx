@@ -2,19 +2,14 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/auth/Login";
 import PrivateRoute from "./components/layout/PrivateRoute";
 import AppLayout from "./components/layout/AppLayout";
+
 import ClientesPage from "./pages/clientes/ClientesPage";
+import ClienteDetallePage from "./pages/clientes/ClienteDetallePage";
 import RutinasPage from "./pages/rutinas/RutinasPage";
+import RutinaDetallePage from "./pages/rutinas/RutinaDetallePage";
 import EjerciciosPage from "./pages/ejercicios/EjerciciosPage";
-function Dashboard() {
-  return (
-    <AppLayout>
-      <h1 className="text-2xl font-bold mb-2">Dashboard KORUS</h1>
-      <p className="text-sm text-slate-600">
-        Aquí iremos montando el panel con resumen de clientes, rutinas y ejercicios.
-      </p>
-    </AppLayout>
-  );
-}
+import EjercicioDetallePage from "./pages/ejercicios/EjercicioDetallePage";
+import DashboardPage from "./pages/dashboard/DashboardPage";
 
 function App() {
   return (
@@ -23,12 +18,14 @@ function App() {
         {/* Pública */}
         <Route path="/login" element={<Login />} />
 
-        {/* Privadas */}
+        {/* Privadas con layout */}
         <Route
           path="/dashboard"
           element={
             <PrivateRoute>
-              <Dashboard />
+              <AppLayout>
+                <DashboardPage />
+              </AppLayout>
             </PrivateRoute>
           }
         />
@@ -39,6 +36,16 @@ function App() {
             <PrivateRoute>
               <AppLayout>
                 <ClientesPage />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/clientes/:id"
+          element={
+            <PrivateRoute>
+              <AppLayout>
+                <ClienteDetallePage />
               </AppLayout>
             </PrivateRoute>
           }
@@ -54,13 +61,33 @@ function App() {
             </PrivateRoute>
           }
         />
+         <Route
+          path="/rutinas/:id"
+          element={
+            <PrivateRoute>
+              <AppLayout>
+                <RutinaDetallePage />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
 
         <Route
           path="/ejercicios"
           element={
             <PrivateRoute>
               <AppLayout>
-               <EjerciciosPage />
+                <EjerciciosPage />
+              </AppLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/ejercicios/:id"
+          element={
+            <PrivateRoute>
+              <AppLayout>
+                <EjercicioDetallePage />
               </AppLayout>
             </PrivateRoute>
           }

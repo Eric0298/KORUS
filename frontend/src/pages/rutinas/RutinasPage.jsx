@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
+import RutinaCard from "../../components/rutinas/RutinaCard";
 import {
-    obtenerRutinas,
-    crearRutinaRequest,
-}from "../../services/rutinasService";
-export default function RutinasPage(){
-   const [rutinas, setRutinas] = useState([]);
+  obtenerRutinas,
+  crearRutinaRequest,
+} from "../../services/rutinasService";
+
+export default function RutinasPage() {
+  const [rutinas, setRutinas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [mensajeExito, setMensajeExito] = useState("");
+  const [cargandoCrear, setCargandoCrear] = useState(false);
 
   const [nombre, setNombre] = useState("");
   const [objetivo, setObjetivo] = useState("ganancia_muscular");
@@ -15,31 +19,38 @@ export default function RutinasPage(){
   const [diasPorSemana, setDiasPorSemana] = useState(3);
   const [semanasTotales, setSemanasTotales] = useState(4);
   const [esPlantilla, setEsPlantilla] = useState(true);
-  const cargarRutinas = async ()=>{
-    try{
-        setCargando(true);
-        const data = await obtenerRutinas();
-        setRutinas(data.rutinas||[]);
-    }catch(err){
-        console.error(err);
-        setError("Error al cargar rutnas");
-    }finally{
-        setCargando(false);
+
+  const cargarRutinas = async () => {
+    try {
+      setCargando(true);
+      const data = await obtenerRutinas();
+      setRutinas(data.rutinas || []);
+    } catch (err) {
+      console.error(err);
+      setError("Error al cargar rutinas");
+    } finally {
+      setCargando(false);
     }
   };
-  useEffect(()=>{
+
+  useEffect(() => {
     cargarRutinas();
-  },[]);
-  const handleCrearRutina = async(e)=>{
+  }, []);
+
+  const handleCrearRutina = async (e) => {
     e.preventDefault();
     setError("");
+    setMensajeExito("");
+    setCargandoCrear(true);
 
-    if(!nombre.trim()){
-        setError("El nombre es obligatorio");
-        return;
+    if (!nombre.trim()) {
+      setError("El nombre es obligatorio");
+      setCargandoCrear(false);
+      return;
     }
+
     try {
-         await crearRutinaRequest({
+      await crearRutinaRequest({
         nombre,
         objetivo,
         nivel,
@@ -47,35 +58,29 @@ export default function RutinasPage(){
         diasPorSemana: Number(diasPorSemana),
         semanasTotales: Number(semanasTotales),
         esPlantilla,
-        dias: [], // de momento, sin días ni ejercicios
+        dias: [],
       });
-       setNombre("");
+
+      // reset formulario
+      setNombre("");
       setObjetivo("ganancia_muscular");
       setNivel("principiante");
       setTipoSplit("fullbody");
       setDiasPorSemana(3);
       setSemanasTotales(4);
       setEsPlantilla(true);
+
+      setMensajeExito("Rutina creada correctamente ✅");
       await cargarRutinas();
     } catch (err) {
-        console.error(err);
-        setError(err.response?.data?.mensaje|| "Error al crear rutina");
+      console.error(err);
+      setError(err.response?.data?.mensaje || "Error al crear rutina");
+    } finally {
+      setCargandoCrear(false);
     }
   };
-  const traducirObjetivo = (obj)=>{
-    const mapa = {
-        perdida_grasa: "Pérdida de grasa",
-      ganancia_muscular: "Ganancia muscular",
-      rendimiento: "Rendimiento",
-      salud_general: "Salud general",
-      rehabilitacion: "Rehabilitación",
-      competicion: "Competición",
-      mantenimiento: "Mantenimiento",
-      otro: "Otro",
-    };
-    return mapa[obj]||obj;
-  };
-  return(
+
+  return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Rutinas</h1>
 
@@ -87,6 +92,9 @@ export default function RutinasPage(){
         <h2 className="font-semibold text-lg">Nueva rutina básica</h2>
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
+        {mensajeExito && (
+          <p className="text-green-600 text-sm">{mensajeExito}</p>
+        )}
 
         <div>
           <label className="block text-sm mb-1">Nombre de la rutina</label>
@@ -182,13 +190,20 @@ export default function RutinasPage(){
           </div>
         </div>
 
-        <button className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-          Crear rutina
+        <button
+          disabled={cargandoCrear}
+          className={`px-4 py-2 rounded text-sm text-white ${
+            cargandoCrear
+              ? "bg-blue-300 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {cargandoCrear ? "Creando..." : "Crear rutina"}
         </button>
       </form>
 
-      {/* Listado de rutinas */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      {/* Listado de rutinas en cards */}
+      <div className="bg-transparent">
         <h2 className="font-semibold text-lg mb-3">Listado de rutinas</h2>
 
         {cargando ? (
@@ -196,37 +211,17 @@ export default function RutinasPage(){
         ) : rutinas.length === 0 ? (
           <p className="text-sm text-slate-500">Aún no hay rutinas.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="py-2">Nombre</th>
-                <th className="py-2">Objetivo</th>
-                <th className="py-2">Nivel</th>
-                <th className="py-2">Tipo split</th>
-                <th className="py-2">Días/sem</th>
-                <th className="py-2">Semanas</th>
-                <th className="py-2">Estado</th>
-                <th className="py-2">Plantilla</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rutinas.map((r) => (
-                <tr key={r._id} className="border-b last:border-0">
-                  <td className="py-2">{r.nombre}</td>
-                  <td className="py-2">{traducirObjetivo(r.objetivo)}</td>
-                  <td className="py-2">{r.nivel}</td>
-                  <td className="py-2">{r.tipoSplit || "-"}</td>
-                  <td className="py-2">{r.diasPorSemana || "-"}</td>
-                  <td className="py-2">{r.semanasTotales || "-"}</td>
-                  <td className="py-2">{r.estado}</td>
-                  <td className="py-2">{r.esPlantilla ? "Sí" : "No"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {rutinas.map((r) => (
+              <RutinaCard
+                key={r._id}
+                rutina={r}
+                onEliminada={cargarRutinas} 
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
   );
 }
-

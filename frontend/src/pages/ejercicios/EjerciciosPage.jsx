@@ -1,81 +1,96 @@
-import { useEffect,useState } from "react";
-import{
-    obtenerEjercicios,
-    crearEjerciciosRequest,
-}from "../../services/ejerciciosServices";
-export default function EjerciciosPage(){
-    const [ejercicios, setEjercicios] = useState([]);
-    const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+import { useEffect, useState } from "react";
+import {
+  obtenerEjercicios,
+  crearEjercicioRequest,
+} from "../../services/ejerciciosServices";
+import EjercicioCard from "../../components/ejercicios/EjercicioCard";
 
-   const [nombre, setNombre] = useState("");
+export default function EjerciciosPage() {
+  const [ejercicios, setEjercicios] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+  const [mensajeExito, setMensajeExito] = useState("");
+  const [cargandoCrear, setCargandoCrear] = useState(false);
+
+  // Formulario de nuevo ejercicio
+  const [nombre, setNombre] = useState("");
   const [grupoMuscular, setGrupoMuscular] = useState("");
+  const [etiquetasTexto, setEtiquetasTexto] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [equipo, setEquipo] = useState("");
-  const [etiquetas, setEtiquetas] = useState("");
-  
-  const cargarEjercicios = async()=>{
-    try{
+
+  const cargarEjercicios = async () => {
+    try {
       setCargando(true);
       const data = await obtenerEjercicios();
-      setEjercicios(data.ejercicios||[]);  
-    }catch(err){
-        console.error(err);
-        setError("Error al cargar ejercicios");
-    }finally{
-        setCargando(false);
+      setEjercicios(data.ejercicios || []);
+    } catch (err) {
+      console.error(err);
+      setError("Error al cargar ejercicios");
+    } finally {
+      setCargando(false);
     }
   };
-  useEffect(()=>{
+
+  useEffect(() => {
     cargarEjercicios();
-  },[]);
-  const handleCrearEjercicio = async(e)=>{
+  }, []);
+
+  const handleCrearEjercicio = async (e) => {
     e.preventDefault();
     setError("");
-    if(!nombre.trim()){
-        setError("El nombre del ejercicio es obligatorio");
-        return;
+    setMensajeExito("");
+
+    if (!nombre.trim()) {
+      setError("El nombre del ejercicio es obligatorio");
+      return;
     }
+
     try {
-        await crearEjerciciosRequest({
-        nombre,
-        grupoMuscular,
-        descripcion,
-        videoUrl,
-        equipoNecesario: equipo
-          .split(",")
-          .map((e) => e.trim())
-          .filter((e) => e !== ""),
-        etiquetas: etiquetas
-          .split(",")
-          .map((e) => e.trim())
-          .filter((e) => e !== ""),    
-        });
-        setNombre("");
+      setCargandoCrear(true);
+
+      const etiquetas = etiquetasTexto
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      await crearEjercicioRequest({
+        nombre: nombre.trim(),
+        grupoMuscular: grupoMuscular.trim() || undefined,
+        descripcion: descripcion.trim() || undefined,
+        etiquetas,
+      });
+
+      setNombre("");
       setGrupoMuscular("");
+      setEtiquetasTexto("");
       setDescripcion("");
-      setVideoUrl("");
-      setEquipo("");
-      setEtiquetas("");
+      setMensajeExito("Ejercicio creado correctamente ✅");
       await cargarEjercicios();
     } catch (err) {
-        console.error(err);
-        setError(err.response?.data?.mensaje|| "Error al crear ejercicio");
+      console.error(err);
+      setError(
+        err.response?.data?.mensaje || "Error al crear el ejercicio"
+      );
+    } finally {
+      setCargandoCrear(false);
     }
   };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Ejercicios</h1>
 
-      {/* Formulario creación */}
+      {/* Formulario crear ejercicio */}
       <form
         onSubmit={handleCrearEjercicio}
-        className="bg-white p-4 rounded-lg shadow space-y-4 max-w-2xl"
+        className="bg-white p-4 rounded-lg shadow space-y-4 max-w-xl"
       >
         <h2 className="font-semibold text-lg">Nuevo ejercicio</h2>
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
+        {mensajeExito && (
+          <p className="text-green-600 text-sm">{mensajeExito}</p>
+        )}
 
         <div>
           <label className="block text-sm mb-1">Nombre</label>
@@ -84,7 +99,6 @@ export default function EjerciciosPage(){
             className="w-full border rounded p-2 text-sm"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            placeholder="Sentadilla con mancuernas"
           />
         </div>
 
@@ -93,9 +107,20 @@ export default function EjerciciosPage(){
           <input
             type="text"
             className="w-full border rounded p-2 text-sm"
+            placeholder="Pecho, espalda, pierna, fullbody..."
             value={grupoMuscular}
             onChange={(e) => setGrupoMuscular(e.target.value)}
-            placeholder="Piernas, pecho, espalda..."
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm mb-1">Etiquetas (coma separadas)</label>
+          <input
+            type="text"
+            className="w-full border rounded p-2 text-sm"
+            placeholder="press banca, barra, fuerza..."
+            value={etiquetasTexto}
+            onChange={(e) => setEtiquetasTexto(e.target.value)}
           />
         </div>
 
@@ -103,52 +128,27 @@ export default function EjerciciosPage(){
           <label className="block text-sm mb-1">Descripción</label>
           <textarea
             className="w-full border rounded p-2 text-sm"
+            rows={2}
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
-            placeholder="Detalles sobre la técnica, rango de movimiento..."
           />
         </div>
 
-        <div>
-          <label className="block text-sm mb-1">URL de video (opcional)</label>
-          <input
-            type="text"
-            className="w-full border rounded p-2 text-sm"
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder="https://youtube.com/... "
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Equipo necesario (coma)</label>
-          <input
-            type="text"
-            className="w-full border rounded p-2 text-sm"
-            value={equipo}
-            onChange={(e) => setEquipo(e.target.value)}
-            placeholder="mancuernas, banco..."
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Etiquetas (coma)</label>
-          <input
-            type="text"
-            className="w-full border rounded p-2 text-sm"
-            value={etiquetas}
-            onChange={(e) => setEtiquetas(e.target.value)}
-            placeholder="fuerza, hipertrofia ..."
-          />
-        </div>
-
-        <button className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-          Crear ejercicio
+        <button
+          type="submit"
+          disabled={cargandoCrear}
+          className={`px-4 py-2 rounded text-sm text-white ${
+            cargandoCrear
+              ? "bg-blue-300 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {cargandoCrear ? "Creando..." : "Crear ejercicio"}
         </button>
       </form>
 
-      {/* Listado */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      {/* Listado de ejercicios */}
+      <div>
         <h2 className="font-semibold text-lg mb-3">Listado de ejercicios</h2>
 
         {cargando ? (
@@ -156,24 +156,15 @@ export default function EjerciciosPage(){
         ) : ejercicios.length === 0 ? (
           <p className="text-sm text-slate-500">Aún no hay ejercicios.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="py-2">Nombre</th>
-                <th className="py-2">Grupo muscular</th>
-                <th className="py-2">Etiquetas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ejercicios.map((ej) => (
-                <tr key={ej._id} className="border-b last:border-0">
-                  <td className="py-2">{ej.nombre}</td>
-                  <td className="py-2">{ej.grupoMuscular || "-"}</td>
-                  <td className="py-2">{(ej.etiquetas || []).join(", ")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ejercicios.map((ej) => (
+              <EjercicioCard
+                key={ej._id}
+                ejercicio={ej}
+                onEliminado={cargarEjercicios}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
