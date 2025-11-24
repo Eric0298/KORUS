@@ -1,3 +1,4 @@
+// src/pages/ejercicios/EjercicioDetallePage.jsx
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
@@ -5,7 +6,6 @@ import {
   actualizarEjercicioRequest,
   eliminarEjercicioRequest,
 } from "../../services/ejerciciosServices";
-import EjercicioCard from "../../components/ejercicios/EjercicioCard";
 
 export default function EjercicioDetallePage() {
   const { id } = useParams();
@@ -90,7 +90,8 @@ export default function EjercicioDetallePage() {
     } catch (err) {
       console.error(err);
       setError(
-        err.response?.data?.mensaje || "Error al guardar los cambios del ejercicio"
+        err.response?.data?.mensaje ||
+          "Error al guardar los cambios del ejercicio"
       );
     } finally {
       setGuardando(false);
@@ -98,7 +99,9 @@ export default function EjercicioDetallePage() {
   };
 
   const handleEliminarEjercicio = async () => {
-    const confirmar = window.confirm("¿Seguro que quieres eliminar este ejercicio?");
+    const confirmar = window.confirm(
+      "¿Seguro que quieres eliminar este ejercicio?"
+    );
     if (!confirmar) return;
 
     try {
@@ -113,16 +116,16 @@ export default function EjercicioDetallePage() {
   };
 
   if (cargando) {
-    return <p>Cargando ejercicio...</p>;
+    return <p className="text-sm text-korus-textMuted">Cargando ejercicio...</p>;
   }
 
-  if (error) {
+  if (error && !ejercicio) {
     return (
       <div className="space-y-4">
-        <p className="text-red-600 text-sm">{error}</p>
+        <p className="text-korus-danger text-sm">{error}</p>
         <Link
           to="/ejercicios"
-          className="inline-block text-sm text-blue-600 hover:underline"
+          className="inline-block text-xs px-3 py-1 rounded-xl border border-korus-border text-korus-text hover:bg-korus-card/80"
         >
           ← Volver a ejercicios
         </Link>
@@ -133,10 +136,10 @@ export default function EjercicioDetallePage() {
   if (!ejercicio) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-slate-600">Ejercicio no encontrado.</p>
+        <p className="text-sm text-korus-textMuted">Ejercicio no encontrado.</p>
         <Link
           to="/ejercicios"
-          className="inline-block text-sm text-blue-600 hover:underline"
+          className="inline-block text-xs px-3 py-1 rounded-xl border border-korus-border text-korus-text hover:bg-korus-card/80"
         >
           ← Volver a ejercicios
         </Link>
@@ -150,165 +153,215 @@ export default function EjercicioDetallePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Ejercicio: {ejercicio.nombre}</h1>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-korus-text">
+            Ejercicio: {ejercicio.nombre}
+          </h1>
+          {ejercicio.grupoMuscular && (
+            <p className="text-sm text-korus-textMuted mt-1">
+              Grupo muscular: {ejercicio.grupoMuscular}
+            </p>
+          )}
+        </div>
         <Link
           to="/ejercicios"
-          className="text-xs px-3 py-1 rounded border border-slate-300 hover:bg-slate-50"
+          className="text-xs px-3 py-1 rounded-xl border border-korus-border text-korus-text hover:bg-korus-card/80"
         >
           ← Volver a ejercicios
         </Link>
       </div>
 
-      {/* Card resumen */}
-      <div className="max-w-lg">
-        <EjercicioCard ejercicio={ejercicio} />
-      </div>
+      {/* Bloque de edición (lado izquierdo) + vídeo (derecha en desktop) */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+        {/* Edición */}
+        <div className="bg-korus-card rounded-2xl border border-korus-border shadow-xl p-4 space-y-3 relative overflow-hidden">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-korus-primary via-korus-accent to-orange-400" />
 
-      {/* Bloque de edición */}
-      <section className="bg-white rounded-xl shadow p-4 space-y-3 max-w-xl">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-lg">Editar ejercicio</h2>
-          <button
-            type="button"
-            onClick={handleEliminarEjercicio}
-            disabled={eliminando}
-            className={`text-xs px-3 py-1 rounded border border-red-200 ${
-              eliminando
-                ? "bg-red-100 text-red-300 cursor-not-allowed"
-                : "text-red-700 hover:bg-red-50"
-            }`}
-          >
-            {eliminando ? "Eliminando..." : "Eliminar ejercicio"}
-          </button>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-lg text-korus-text">
+              Editar ejercicio
+            </h2>
+            <button
+              type="button"
+              onClick={handleEliminarEjercicio}
+              disabled={eliminando}
+              className={`text-[11px] px-3 py-1 rounded-xl border transition ${
+                eliminando
+                  ? "border-korus-danger/40 bg-korus-danger/10 text-korus-danger/60 cursor-not-allowed"
+                  : "border-korus-danger/40 text-korus-danger hover:bg-korus-danger/10"
+              }`}
+            >
+              {eliminando ? "Eliminando..." : "Eliminar ejercicio"}
+            </button>
+          </div>
+
+          {error && (
+            <p className="text-korus-danger text-xs bg-korus-danger/10 border border-korus-danger/40 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+          {mensajeExito && (
+            <p className="text-emerald-300 text-xs bg-emerald-500/10 border border-emerald-500/40 rounded-lg px-3 py-2">
+              {mensajeExito}
+            </p>
+          )}
+
+          <form onSubmit={handleGuardarCambios} className="space-y-3 text-sm">
+            <div className="space-y-1">
+              <label className="block text-[11px] font-medium text-korus-textMuted uppercase tracking-wide">
+                Nombre
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-korus-border bg-korus-bg/40 text-korus-text text-sm px-3 py-2
+                           focus:outline-none focus:ring-2 focus:ring-korus-primary/60 focus:border-korus-primary/60"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-[11px] font-medium text-korus-textMuted uppercase tracking-wide">
+                Grupo muscular
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-korus-border bg-korus-bg/40 text-korus-text text-sm px-3 py-2
+                           focus:outline-none focus:ring-2 focus:ring-korus-primary/60 focus:border-korus-primary/60"
+                value={grupoMuscular}
+                onChange={(e) => setGrupoMuscular(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-[11px] font-medium text-korus-textMuted uppercase tracking-wide">
+                Descripción
+              </label>
+              <textarea
+                className="w-full rounded-xl border border-korus-border bg-korus-bg/40 text-korus-text text-sm px-3 py-2
+                           focus:outline-none focus:ring-2 focus:ring-korus-primary/60 focus:border-korus-primary/60"
+                rows={3}
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-[11px] font-medium text-korus-textMuted uppercase tracking-wide">
+                URL de vídeo
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-korus-border bg-korus-bg/40 text-korus-text text-sm px-3 py-2
+                           placeholder:text-korus-textMuted/70
+                           focus:outline-none focus:ring-2 focus:ring-korus-primary/60 focus:border-korus-primary/60"
+                placeholder="https://..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-[11px] font-medium text-korus-textMuted uppercase tracking-wide">
+                Equipo necesario (separado por comas)
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-korus-border bg-korus-bg/40 text-korus-text text-sm px-3 py-2
+                           focus:outline-none focus:ring-2 focus:ring-korus-primary/60 focus:border-korus-primary/60"
+                value={equipoTexto}
+                onChange={(e) => setEquipoTexto(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-[11px] font-medium text-korus-textMuted uppercase tracking-wide">
+                Etiquetas (separadas por comas)
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-korus-border bg-korus-bg/40 text-korus-text text-sm px-3 py-2
+                           focus:outline-none focus:ring-2 focus:ring-korus-primary/60 focus:border-korus-primary/60"
+                value={etiquetasTexto}
+                onChange={(e) => setEtiquetasTexto(e.target.value)}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={guardando}
+              className={`inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white
+                bg-gradient-to-r from-korus-primary via-korus-accent to-orange-400
+                shadow-md shadow-korus-primary/30
+                transition
+                ${
+                  guardando
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:brightness-110"
+                }`}
+            >
+              {guardando ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </form>
         </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        {mensajeExito && (
-          <p className="text-green-600 text-sm">{mensajeExito}</p>
-        )}
-
-        <form onSubmit={handleGuardarCambios} className="space-y-3 text-sm">
-          <div>
-            <label className="block mb-1">Nombre</label>
-            <input
-              type="text"
-              className="w-full border rounded p-2"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1">Grupo muscular</label>
-            <input
-              type="text"
-              className="w-full border rounded p-2"
-              value={grupoMuscular}
-              onChange={(e) => setGrupoMuscular(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1">Descripción</label>
-            <textarea
-              className="w-full border rounded p-2"
-              rows={3}
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1">URL de vídeo</label>
-            <input
-              type="text"
-              className="w-full border rounded p-2"
-              placeholder="https://..."
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1">Equipo necesario (coma separadas)</label>
-            <input
-              type="text"
-              className="w-full border rounded p-2"
-              value={equipoTexto}
-              onChange={(e) => setEquipoTexto(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1">Etiquetas (coma separadas)</label>
-            <input
-              type="text"
-              className="w-full border rounded p-2"
-              value={etiquetasTexto}
-              onChange={(e) => setEtiquetasTexto(e.target.value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={guardando}
-            className={`px-4 py-2 rounded text-sm text-white ${
-              guardando
-                ? "bg-blue-300 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
-        </form>
-      </section>
-
-      {/* Bloques de info (como antes) */}
-      <section className="bg-white rounded-xl shadow p-4 space-y-2">
-        <h2 className="font-semibold text-lg mb-1">Equipo necesario</h2>
-        {equipo.length === 0 ? (
-          <p className="text-sm text-slate-600">Sin equipo específico.</p>
-        ) : (
-          <ul className="list-disc ml-4 text-sm text-slate-700">
-            {equipo.map((item, idx) => (
-              <li key={idx}>{item}</li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="bg-white rounded-xl shadow p-4 space-y-2">
-        <h2 className="font-semibold text-lg mb-1">Etiquetas</h2>
-        {etiquetas.length === 0 ? (
-          <p className="text-sm text-slate-600">Sin etiquetas.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2 text-xs">
-            {etiquetas.map((tag, idx) => (
-              <span
-                key={idx}
-                className="px-2 py-1 rounded-full bg-slate-100 text-slate-700"
+        {/* Panel lateral: vídeo + chips */}
+        <div className="space-y-4">
+          <section className="bg-korus-card rounded-2xl border border-korus-border shadow p-4 space-y-2">
+            <h2 className="font-semibold text-sm text-korus-text mb-1">
+              Vídeo de referencia
+            </h2>
+            {ejercicio.videoUrl ? (
+              <a
+                href={ejercicio.videoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-korus-primary hover:text-korus-accent"
               >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </section>
+                Ver vídeo del ejercicio
+              </a>
+            ) : (
+              <p className="text-xs text-korus-textMuted">
+                Sin vídeo asociado todavía.
+              </p>
+            )}
+          </section>
 
-      <section className="bg-white rounded-xl shadow p-4 space-y-2">
-        <h2 className="font-semibold text-lg mb-1">Vídeo de referencia</h2>
-        {ejercicio.videoUrl ? (
-          <a
-            href={ejercicio.videoUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Ver vídeo del ejercicio
-          </a>
-        ) : (
-          <p className="text-sm text-slate-600">Sin vídeo asociado.</p>
-        )}
+          <section className="bg-korus-card rounded-2xl border border-korus-border shadow p-4 space-y-2">
+            <h2 className="font-semibold text-sm text-korus-text">
+              Equipo necesario
+            </h2>
+            {equipo.length === 0 ? (
+              <p className="text-xs text-korus-textMuted">
+                Sin equipo específico.
+              </p>
+            ) : (
+              <ul className="list-disc ml-4 text-xs text-korus-textMuted">
+                {equipo.map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="bg-korus-card rounded-2xl border border-korus-border shadow p-4 space-y-2">
+            <h2 className="font-semibold text-sm text-korus-text">Etiquetas</h2>
+            {etiquetas.length === 0 ? (
+              <p className="text-xs text-korus-textMuted">Sin etiquetas.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2 text-[11px]">
+                {etiquetas.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-1 rounded-full bg-korus-primarySoft text-korus-primary"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </section>
     </div>
   );

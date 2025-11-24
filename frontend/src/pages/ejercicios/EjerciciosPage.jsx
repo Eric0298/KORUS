@@ -1,3 +1,4 @@
+// src/pages/ejercicios/EjerciciosPage.jsx
 import { useEffect, useState } from "react";
 import {
   obtenerEjercicios,
@@ -78,83 +79,139 @@ export default function EjerciciosPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Ejercicios</h1>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-korus-text">
+          Ejercicios
+        </h1>
+        <p className="text-sm text-korus-textMuted mt-1">
+          Gestiona tu catálogo de ejercicios para construir rutinas rápidas y profesionales.
+        </p>
+      </div>
 
-      {/* Formulario crear ejercicio */}
-      <form
-        onSubmit={handleCrearEjercicio}
-        className="bg-white p-4 rounded-lg shadow space-y-4 max-w-xl"
-      >
-        <h2 className="font-semibold text-lg">Nuevo ejercicio</h2>
+     {/* TARJETA CREACIÓN RÁPIDA EJERCICIO (mismo estilo que Rutinas) */}
+<div className="max-w-3xl">
+  <div className="p-[2px] rounded-2xl bg-gradient-to-r from-blue-500 via-sky-400 to-orange-400 shadow-xl">
+    <form
+      onSubmit={handleCrearEjercicio}
+      className="bg-korus-card/95 rounded-2xl p-5 space-y-4"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-semibold text-lg text-korus-text">
+          Nuevo ejercicio
+        </h2>
+        <span className="text-[11px] px-2 py-0.5 rounded-full bg-korus-primarySoft text-korus-primary">
+          catálogo personal
+        </span>
+      </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        {mensajeExito && (
-          <p className="text-green-600 text-sm">{mensajeExito}</p>
-        )}
+      {error && (
+        <p className="text-sm text-korus-danger bg-korus-danger/10 border border-korus-danger/40 px-3 py-2 rounded-lg">
+          {error}
+        </p>
+      )}
+      {mensajeExito && (
+        <p className="text-sm text-korus-success bg-korus-success/10 border border-korus-success/40 px-3 py-2 rounded-lg">
+          {mensajeExito}
+        </p>
+      )}
 
+      {/* Primera fila: nombre + grupo muscular */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm mb-1">Nombre</label>
+          <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+            NOMBRE DEL EJERCICIO
+          </label>
           <input
             type="text"
-            className="w-full border rounded p-2 text-sm"
+            className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                       placeholder:text-korus-textMuted/70
+                       focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
+            placeholder="Press banca, sentadilla, remo con barra..."
           />
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Grupo muscular</label>
+          <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+            GRUPO MUSCULAR
+          </label>
           <input
             type="text"
-            className="w-full border rounded p-2 text-sm"
+            className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                       placeholder:text-korus-textMuted/70
+                       focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
             placeholder="Pecho, espalda, pierna, fullbody..."
             value={grupoMuscular}
             onChange={(e) => setGrupoMuscular(e.target.value)}
           />
         </div>
+      </div>
 
-        <div>
-          <label className="block text-sm mb-1">Etiquetas (coma separadas)</label>
-          <input
-            type="text"
-            className="w-full border rounded p-2 text-sm"
-            placeholder="press banca, barra, fuerza..."
-            value={etiquetasTexto}
-            onChange={(e) => setEtiquetasTexto(e.target.value)}
-          />
-        </div>
+      {/* Etiquetas */}
+      <div>
+        <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+          ETIQUETAS (SEPARADAS POR COMA)
+        </label>
+        <input
+          type="text"
+          className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                     placeholder:text-korus-textMuted/70
+                     focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+          placeholder="press banca, barra, fuerza..."
+          value={etiquetasTexto}
+          onChange={(e) => setEtiquetasTexto(e.target.value)}
+        />
+      </div>
 
-        <div>
-          <label className="block text-sm mb-1">Descripción</label>
-          <textarea
-            className="w-full border rounded p-2 text-sm"
-            rows={2}
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-          />
-        </div>
+      {/* Descripción */}
+      <div>
+        <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+          DESCRIPCIÓN
+        </label>
+        <textarea
+          className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                     placeholder:text-korus-textMuted/70
+                     focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+          rows={2}
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          placeholder="Notas técnicas rápidas para recordar la ejecución..."
+        />
+      </div>
 
-        <button
-          type="submit"
-          disabled={cargandoCrear}
-          className={`px-4 py-2 rounded text-sm text-white ${
+      {/* Botón */}
+      <button
+        type="submit"
+        disabled={cargandoCrear}
+        className={`inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white
+          bg-gradient-to-r from-korus-primary via-korus-accent to-orange-400
+          shadow-md shadow-korus-primary/30
+          transition
+          ${
             cargandoCrear
-              ? "bg-blue-300 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
+              ? "opacity-60 cursor-not-allowed"
+              : "hover:brightness-110"
           }`}
-        >
-          {cargandoCrear ? "Creando..." : "Crear ejercicio"}
-        </button>
-      </form>
+      >
+        {cargandoCrear ? "Creando..." : "Crear ejercicio"}
+      </button>
+    </form>
+  </div>
+</div>
 
       {/* Listado de ejercicios */}
       <div>
-        <h2 className="font-semibold text-lg mb-3">Listado de ejercicios</h2>
+        <h2 className="font-semibold text-lg mb-3 text-korus-text">
+          Listado de ejercicios
+        </h2>
 
         {cargando ? (
-          <p>Cargando ejercicios...</p>
+          <p className="text-sm text-korus-textMuted">Cargando ejercicios...</p>
         ) : ejercicios.length === 0 ? (
-          <p className="text-sm text-slate-500">Aún no hay ejercicios.</p>
+          <p className="text-sm text-korus-textMuted">
+            Aún no hay ejercicios registrados.
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {ejercicios.map((ej) => (

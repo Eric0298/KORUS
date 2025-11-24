@@ -82,142 +82,199 @@ export default function RutinasPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Rutinas</h1>
+      {/* TÍTULO */}
+      <div>
+        <h1 className="text-2xl font-bold text-korus-text">Rutinas</h1>
+        <p className="text-sm text-korus-textMuted mt-1">
+          Crea plantillas y rutinas activas para tus clientes.
+        </p>
+      </div>
 
-      {/* Formulario creación rápida */}
-      <form
-        onSubmit={handleCrearRutina}
-        className="bg-white p-4 rounded-lg shadow space-y-4 max-w-2xl"
-      >
-        <h2 className="font-semibold text-lg">Nueva rutina básica</h2>
+      {/* TARJETA CREACIÓN RÁPIDA (con borde degradado) */}
+      <div className="max-w-3xl">
+        <div className="p-[2px] rounded-2xl bg-gradient-to-r from-blue-500 via-sky-400 to-orange-400 shadow-xl">
+          <form
+            onSubmit={handleCrearRutina}
+            className="bg-korus-card/95 rounded-2xl p-5 space-y-4"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-semibold text-lg text-korus-text">
+                Nueva rutina básica
+              </h2>
+              {esPlantilla && (
+                <span className="text-[11px] px-2 py-1 rounded-full bg-korus-accent/15 text-korus-accent">
+                  Guardando como plantilla
+                </span>
+              )}
+            </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        {mensajeExito && (
-          <p className="text-green-600 text-sm">{mensajeExito}</p>
-        )}
+            {error && (
+              <p className="text-sm text-korus-danger bg-korus-danger/10 border border-korus-danger/40 px-3 py-2 rounded-lg">
+                {error}
+              </p>
+            )}
+            {mensajeExito && (
+              <p className="text-sm text-korus-success bg-korus-success/10 border border-korus-success/40 px-3 py-2 rounded-lg">
+                {mensajeExito}
+              </p>
+            )}
 
-        <div>
-          <label className="block text-sm mb-1">Nombre de la rutina</label>
-          <input
-            type="text"
-            className="w-full border rounded p-2 text-sm"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-          />
-        </div>
+            {/* Nombre */}
+            <div>
+              <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+                NOMBRE DE LA RUTINA
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                placeholder:text-korus-textMuted/70
+                focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Fullbody fuerza 3 días, Torso-Pierna, etc."
+              />
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm mb-1">Objetivo</label>
-            <select
-              className="w-full border rounded p-2 text-sm"
-              value={objetivo}
-              onChange={(e) => setObjetivo(e.target.value)}
+            {/* Primera fila */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+                  OBJETIVO
+                </label>
+                <select
+                  className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
+                  value={objetivo}
+                  onChange={(e) => setObjetivo(e.target.value)}
+                >
+                  <option value="perdida_grasa">Pérdida de grasa</option>
+                  <option value="ganancia_muscular">Ganancia muscular</option>
+                  <option value="rendimiento">Rendimiento</option>
+                  <option value="salud_general">Salud general</option>
+                  <option value="rehabilitacion">Rehabilitación</option>
+                  <option value="competicion">Competición</option>
+                  <option value="mantenimiento">Mantenimiento</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+                  NIVEL
+                </label>
+                <select
+                  className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
+                  value={nivel}
+                  onChange={(e) => setNivel(e.target.value)}
+                >
+                  <option value="principiante">Principiante</option>
+                  <option value="intermedio">Intermedio</option>
+                  <option value="avanzado">Avanzado</option>
+                  <option value="competicion">Competición</option>
+                  <option value="elite">Élite</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+                  TIPO DE SPLIT
+                </label>
+                <input
+                  type="text"
+                  className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                  placeholder:text-korus-textMuted/70
+                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+                  value={tipoSplit}
+                  onChange={(e) => setTipoSplit(e.target.value)}
+                  placeholder="fullbody, torso-pierna, weider..."
+                />
+              </div>
+            </div>
+
+            {/* Segunda fila */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+                  DÍAS POR SEMANA
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={14}
+                  className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+                  value={diasPorSemana}
+                  onChange={(e) => setDiasPorSemana(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+                  SEMANAS TOTALES
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={52}
+                  className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+                  value={semanasTotales}
+                  onChange={(e) => setSemanasTotales(e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-center gap-2 mt-6">
+                <input
+                  id="esPlantilla"
+                  type="checkbox"
+                  className="rounded border-korus-border text-korus-accent focus:ring-korus-accent/60"
+                  checked={esPlantilla}
+                  onChange={(e) => setEsPlantilla(e.target.checked)}
+                />
+                <label
+                  htmlFor="esPlantilla"
+                  className="text-xs text-korus-textMuted"
+                >
+                  Guardar como plantilla
+                </label>
+              </div>
+            </div>
+
+            <button
+              disabled={cargandoCrear}
+              className={`
+                inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white
+            bg-gradient-to-r from-korus-primary via-korus-accent to-orange-400
+            shadow-md shadow-korus-primary/30
+            transition
+                ${
+                  cargandoCrear
+                    ? "bg-korus-primary/40 cursor-not-allowed"
+                    : "bg-korus-primary hover:bg-korus-primary/90 hover:shadow-lg"
+                }
+              `}
             >
-              <option value="perdida_grasa">Pérdida de grasa</option>
-              <option value="ganancia_muscular">Ganancia muscular</option>
-              <option value="rendimiento">Rendimiento</option>
-              <option value="salud_general">Salud general</option>
-              <option value="rehabilitacion">Rehabilitación</option>
-              <option value="competicion">Competición</option>
-              <option value="mantenimiento">Mantenimiento</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Nivel</label>
-            <select
-              className="w-full border rounded p-2 text-sm"
-              value={nivel}
-              onChange={(e) => setNivel(e.target.value)}
-            >
-              <option value="principiante">Principiante</option>
-              <option value="intermedio">Intermedio</option>
-              <option value="avanzado">Avanzado</option>
-              <option value="competicion">Competición</option>
-              <option value="elite">Élite</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Tipo de split</label>
-            <input
-              type="text"
-              className="w-full border rounded p-2 text-sm"
-              value={tipoSplit}
-              onChange={(e) => setTipoSplit(e.target.value)}
-              placeholder="fullbody, torso-pierna, weider..."
-            />
-          </div>
+              {cargandoCrear ? "Creando..." : "Crear rutina"}
+            </button>
+          </form>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm mb-1">Días por semana</label>
-            <input
-              type="number"
-              className="w-full border rounded p-2 text-sm"
-              min={1}
-              max={14}
-              value={diasPorSemana}
-              onChange={(e) => setDiasPorSemana(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Semanas totales</label>
-            <input
-              type="number"
-              className="w-full border rounded p-2 text-sm"
-              min={1}
-              max={52}
-              value={semanasTotales}
-              onChange={(e) => setSemanasTotales(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-center gap-2 mt-6">
-            <input
-              id="esPlantilla"
-              type="checkbox"
-              checked={esPlantilla}
-              onChange={(e) => setEsPlantilla(e.target.checked)}
-            />
-            <label htmlFor="esPlantilla" className="text-sm">
-              Guardar como plantilla
-            </label>
-          </div>
-        </div>
-
-        <button
-          disabled={cargandoCrear}
-          className={`px-4 py-2 rounded text-sm text-white ${
-            cargandoCrear
-              ? "bg-blue-300 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {cargandoCrear ? "Creando..." : "Crear rutina"}
-        </button>
-      </form>
-
-      {/* Listado de rutinas en cards */}
+      {/* LISTADO DE RUTINAS */}
       <div className="bg-transparent">
-        <h2 className="font-semibold text-lg mb-3">Listado de rutinas</h2>
+        <h2 className="font-semibold text-lg mb-3 text-korus-text">
+          Listado de rutinas
+        </h2>
 
         {cargando ? (
-          <p>Cargando rutinas...</p>
+          <p className="text-sm text-korus-textMuted">Cargando rutinas...</p>
         ) : rutinas.length === 0 ? (
-          <p className="text-sm text-slate-500">Aún no hay rutinas.</p>
+          <p className="text-sm text-korus-textMuted">Aún no hay rutinas.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {rutinas.map((r) => (
-              <RutinaCard
-                key={r._id}
-                rutina={r}
-                onEliminada={cargarRutinas} 
-              />
+              <RutinaCard key={r._id} rutina={r} onEliminada={cargarRutinas} />
             ))}
           </div>
         )}
