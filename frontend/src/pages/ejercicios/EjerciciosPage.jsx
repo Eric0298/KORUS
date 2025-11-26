@@ -1,4 +1,3 @@
-// src/pages/ejercicios/EjerciciosPage.jsx
 import { useEffect, useState } from "react";
 import {
   obtenerEjercicios,

@@ -127,7 +127,7 @@ export default function Login() {
             </form>
 
             <p className="text-[11px] text-korus-textMuted text-center mt-4">
-              Proyecto educativo • Generador de rutinas para entrenadores
+              Proyecto educativo - Generador de rutinas para entrenadores
             </p>
           </div>
         </div>

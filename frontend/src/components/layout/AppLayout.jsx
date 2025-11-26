@@ -1,5 +1,3 @@
-// src/components/layout/AppLayout.jsx
-
 import { useContext, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
