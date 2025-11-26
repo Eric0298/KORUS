@@ -85,7 +85,6 @@ export default function AppLayout({ children }) {
             </nav>
           </div>
 
-          {/* DERECHA → Nombre + avatar + menús */}
           <div className="flex items-center gap-3">
             {/* Nombre en desktop */}
             <span className="hidden sm:inline text-sm text-korus-textMuted">
