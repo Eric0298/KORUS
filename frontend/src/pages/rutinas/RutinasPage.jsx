@@ -4,6 +4,7 @@ import {
   obtenerRutinas,
   crearRutinaRequest,
 } from "../../services/rutinasService";
+import { GradientCard } from "../../components/common/GradientCard";
 
 export default function RutinasPage() {
   const [rutinas, setRutinas] = useState([]);
@@ -90,13 +91,10 @@ export default function RutinasPage() {
         </p>
       </div>
 
-      {/* TARJETA CREACIÓN RÁPIDA (con borde degradado) */}
+      {/* Tarjeta creación rápida (con GradientCard) */}
       <div className="max-w-3xl">
-        <div className="p-[2px] rounded-2xl bg-gradient-to-r from-blue-500 via-sky-400 to-orange-400 shadow-xl">
-          <form
-            onSubmit={handleCrearRutina}
-            className="bg-korus-card/95 rounded-2xl p-5 space-y-4"
-          >
+        <GradientCard>
+          <form onSubmit={handleCrearRutina} className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-semibold text-lg text-korus-text">
                 Nueva rutina básica
@@ -127,8 +125,8 @@ export default function RutinasPage() {
               <input
                 type="text"
                 className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
-                placeholder:text-korus-textMuted/70
-                focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+                           placeholder:text-korus-textMuted/70
+                           focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Fullbody fuerza 3 días, Torso-Pierna, etc."
@@ -143,7 +141,7 @@ export default function RutinasPage() {
                 </label>
                 <select
                   className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
-                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
+                             focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
                   value={objetivo}
                   onChange={(e) => setObjetivo(e.target.value)}
                 >
@@ -164,7 +162,7 @@ export default function RutinasPage() {
                 </label>
                 <select
                   className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
-                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
+                             focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
                   value={nivel}
                   onChange={(e) => setNivel(e.target.value)}
                 >
@@ -183,8 +181,8 @@ export default function RutinasPage() {
                 <input
                   type="text"
                   className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
-                  placeholder:text-korus-textMuted/70
-                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+                             placeholder:text-korus-textMuted/70
+                             focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
                   value={tipoSplit}
                   onChange={(e) => setTipoSplit(e.target.value)}
                   placeholder="fullbody, torso-pierna, weider..."
@@ -203,7 +201,7 @@ export default function RutinasPage() {
                   min={1}
                   max={14}
                   className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
-                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+                             focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
                   value={diasPorSemana}
                   onChange={(e) => setDiasPorSemana(e.target.value)}
                 />
@@ -218,7 +216,7 @@ export default function RutinasPage() {
                   min={1}
                   max={52}
                   className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
-                  focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+                             focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
                   value={semanasTotales}
                   onChange={(e) => setSemanasTotales(e.target.value)}
                 />
@@ -243,22 +241,20 @@ export default function RutinasPage() {
 
             <button
               disabled={cargandoCrear}
-              className={`
-                inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white
-            bg-gradient-to-r from-korus-primary via-korus-accent to-orange-400
-            shadow-md shadow-korus-primary/30
-            transition
+              className={`inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white
+                bg-gradient-to-r from-korus-primary via-korus-accent to-orange-400
+                shadow-md shadow-korus-primary/30
+                transition
                 ${
                   cargandoCrear
-                    ? "bg-korus-primary/40 cursor-not-allowed"
-                    : "bg-korus-primary hover:bg-korus-primary/90 hover:shadow-lg"
-                }
-              `}
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:brightness-110"
+                }`}
             >
               {cargandoCrear ? "Creando..." : "Crear rutina"}
             </button>
           </form>
-        </div>
+        </GradientCard>
       </div>
 
       {/* LISTADO DE RUTINAS */}

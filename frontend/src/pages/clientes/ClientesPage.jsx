@@ -4,6 +4,7 @@ import {
   crearClienteRequest,
 } from "../../services/clientesService";
 import ClienteCard from "../../components/clientes/ClienteCard";
+import { GradientCard } from "../../components/common/GradientCard";
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState([]);
@@ -81,110 +82,109 @@ export default function ClientesPage() {
         </p>
       </header>
 
-      {/* TARJETA CREACIÓN RÁPIDA CLIENTE (mismo estilo que Rutinas) */}
-<div className="max-w-3xl">
-  <div className="p-[2px] rounded-2xl bg-gradient-to-r from-blue-500 via-sky-400 to-orange-400 shadow-xl">
-    <form
-      onSubmit={handleCrearCliente}
-      className="bg-korus-card/95 rounded-2xl p-5 space-y-4"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-semibold text-lg text-korus-text">
-          Nuevo cliente
-        </h2>
+      <div className="max-w-3xl">
+        <GradientCard>
+          <form onSubmit={handleCrearCliente} className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-semibold text-lg text-korus-text">
+                Nuevo cliente
+              </h2>
+            </div>
+
+            {error && (
+              <p className="text-sm text-korus-danger bg-korus-danger/10 border border-korus-danger/40 px-3 py-2 rounded-lg">
+                {error}
+              </p>
+            )}
+            {mensajeExito && (
+              <p className="text-sm text-korus-success bg-korus-success/10 border border-korus-success/40 px-3 py-2 rounded-lg">
+                {mensajeExito}
+              </p>
+            )}
+
+            {/* Nombre */}
+            <div>
+              <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+                NOMBRE DEL CLIENTE
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                           placeholder:text-korus-textMuted/70
+                           focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
+                value={nuevoNombre}
+                onChange={(e) => setNuevoNombre(e.target.value)}
+                placeholder="Nombre y apellidos o alias de cliente"
+              />
+            </div>
+
+            {/* Objetivo + nivel */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+                  OBJETIVO PRINCIPAL
+                </label>
+                <select
+                  className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                             focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
+                  value={nuevoObjetivo}
+                  onChange={(e) => setNuevoObjetivo(e.target.value)}
+                >
+                  <option value="perdida_grasa">Pérdida de grasa</option>
+                  <option value="ganancia_muscular">Ganancia muscular</option>
+                  <option value="rendimiento">Rendimiento</option>
+                  <option value="salud_general">Salud general</option>
+                  <option value="rehabilitacion">Rehabilitación</option>
+                  <option value="competicion">Competición</option>
+                  <option value="mantenimiento">Mantenimiento</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-korus-textMuted mb-1">
+                  NIVEL GENERAL
+                </label>
+                <select
+                  className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
+                             focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
+                  value={nuevoNivel}
+                  onChange={(e) => setNuevoNivel(e.target.value)}
+                >
+                  <option value="principiante">Principiante</option>
+                  <option value="intermedio">Intermedio</option>
+                  <option value="avanzado">Avanzado</option>
+                  <option value="competicion">Competición</option>
+                  <option value="elite">Élite</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Botón */}
+            <button
+              disabled={cargandoCrear}
+              className={`inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white
+                bg-gradient-to-r from-korus-primary via-korus-accent to-orange-400
+                shadow-md shadow-korus-primary/30
+                transition
+                ${
+                  cargandoCrear
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:brightness-110"
+                }`}
+            >
+              {cargandoCrear ? "Creando..." : "Crear cliente"}
+            </button>
+          </form>
+        </GradientCard>
       </div>
 
-      {error && (
-        <p className="text-sm text-korus-danger bg-korus-danger/10 border border-korus-danger/40 px-3 py-2 rounded-lg">
-          {error}
-        </p>
-      )}
-      {mensajeExito && (
-        <p className="text-sm text-korus-success bg-korus-success/10 border border-korus-success/40 px-3 py-2 rounded-lg">
-          {mensajeExito}
-        </p>
-      )}
-
-      {/* Nombre */}
-      <div>
-        <label className="block text-xs font-semibold text-korus-textMuted mb-1">
-          NOMBRE DEL CLIENTE
-        </label>
-        <input
-          type="text"
-          className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
-                     placeholder:text-korus-textMuted/70
-                     focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60"
-          value={nuevoNombre}
-          onChange={(e) => setNuevoNombre(e.target.value)}
-          placeholder="Nombre y apellidos o alias de cliente"
-        />
-      </div>
-
-      {/* Objetivo + nivel */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-semibold text-korus-textMuted mb-1">
-            OBJETIVO PRINCIPAL
-          </label>
-          <select
-            className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
-                       focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
-            value={nuevoObjetivo}
-            onChange={(e) => setNuevoObjetivo(e.target.value)}
-          >
-            <option value="perdida_grasa">Pérdida de grasa</option>
-            <option value="ganancia_muscular">Ganancia muscular</option>
-            <option value="rendimiento">Rendimiento</option>
-            <option value="salud_general">Salud general</option>
-            <option value="rehabilitacion">Rehabilitación</option>
-            <option value="competicion">Competición</option>
-            <option value="mantenimiento">Mantenimiento</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-korus-textMuted mb-1">
-            NIVEL GENERAL
-          </label>
-          <select
-            className="w-full rounded-xl border border-korus-border bg-korus-bg text-slate-100 text-sm px-3 py-2
-                       focus:outline-none focus:ring-2 focus:ring-korus-accent/60 focus:border-korus-accent/60 cursor-pointer"
-            value={nuevoNivel}
-            onChange={(e) => setNuevoNivel(e.target.value)}
-          >
-            <option value="principiante">Principiante</option>
-            <option value="intermedio">Intermedio</option>
-            <option value="avanzado">Avanzado</option>
-            <option value="competicion">Competición</option>
-            <option value="elite">Élite</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Botón */}
-      <button
-        disabled={cargandoCrear}
-        className={`inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white
-          bg-gradient-to-r from-korus-primary via-korus-accent to-orange-400
-          shadow-md shadow-korus-primary/30
-          transition
-          ${cargandoCrear ? "opacity-60 cursor-not-allowed" : "hover:brightness-110"}`}
-      >
-        {cargandoCrear ? "Creando..." : "Crear cliente"}
-      </button>
-    </form>
-  </div>
-</div>
       {/* Listado de clientes en cards */}
       <section className="space-y-3">
         <h2 className="font-semibold text-base md:text-lg">Clientes</h2>
 
         {cargando ? (
-          <p className="text-sm text-korus-textMuted">
-            Cargando clientes...
-          </p>
+          <p className="text-sm text-korus-textMuted">Cargando clientes...</p>
         ) : clientes.length === 0 ? (
           <p className="text-sm text-korus-textMuted">
             Aún no hay clientes. Crea el primero desde el formulario superior.
