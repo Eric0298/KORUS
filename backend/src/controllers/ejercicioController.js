@@ -1,40 +1,42 @@
 const Ejercicio = require("../models/Ejercicio");
+const filtrarCampos = require("../utils/filtrarCampos");
 const crearEjercicio = async(req, res)=>{
     try {
-        const entrenadorId = req.entrenador._id;
-        const {
-           nombre,
-      grupoMuscular,
-      descripcion,
-      equipoNecesario,
-      videoUrl,
-      etiquetas,
-        }=req.body
-        if(!nombre){
-            return res.status(400).json({
-                mensaje: "El nombre del ejercicio es obligatorio",
-            });
-        }
-        const nuevoEjercicio = await Ejercicio.create({
+    const entrenadorId = req.entrenador._id;
+
+    const camposPermitidos = [
+      "nombre",
+      "grupoMuscular",
+      "descripcion",
+      "equipoNecesario",
+      "videoUrl",
+      "etiquetas",
+    ];
+
+    const datos = filtrarCampos(req.body, camposPermitidos);
+
+    if (!datos.nombre) {
+      return res.status(400).json({
+        mensaje: "El nombre del ejercicio es obligatorio",
+      });
+    }
+
+    const nuevoEjercicio = await Ejercicio.create({
       entrenadorId,
-      nombre,
-      grupoMuscular,
-      descripcion,
-      equipoNecesario,
-      videoUrl,
-      etiquetas,
+      ...datos,
     });
+
     return res.status(201).json({
       mensaje: "Ejercicio creado correctamente",
       ejercicio: nuevoEjercicio,
     });
-    } catch (error) {
-        console.error("Error en crearEjercicio:", error);
+  } catch (error) {
+    console.error("Error en crearEjercicio:", error);
     return res.status(500).json({
       mensaje: "Error en el servidor al crear el ejercicio",
       error: error.message,
     });
-    }
+  }
 };
 const listarEjercicios = async (req, res) => {
   try {
@@ -98,7 +100,17 @@ const actualizarEjercicio = async (req, res) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
-    const datosActualizados = req.body;
+
+    const camposPermitidos = [
+      "nombre",
+      "grupoMuscular",
+      "descripcion",
+      "equipoNecesario",
+      "videoUrl",
+      "etiquetas",
+    ];
+
+    const datosActualizados = filtrarCampos(req.body, camposPermitidos);
 
     const ejercicio = await Ejercicio.findOneAndUpdate(
       { _id: id, entrenadorId, eliminado: false },

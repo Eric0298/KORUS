@@ -1,9 +1,28 @@
 const Rutina = require("../models/Rutina");
 const Cliente = require("../models/Cliente");
-
+const filtrarCampos = require("../utils/filtrarCampos");
 const crearRutina = async (req, res) => {
   try {
     const entrenadorId = req.entrenador._id;
+
+    const camposPermitidos = [
+      "clienteId",
+      "nombre",
+      "descripcion",
+      "objetivo",
+      "nivel",
+      "tipoSplit",
+      "diasPorSemana",
+      "semanasTotales",
+      "dias",
+      "esPlantilla",
+      "etiquetas",
+      "fechaInicioUso",
+      "fechaFinUso",
+      "marcarComoActiva",
+    ];
+
+    const datos = filtrarCampos(req.body, camposPermitidos);
 
     const {
       clienteId,
@@ -17,10 +36,10 @@ const crearRutina = async (req, res) => {
       dias,
       esPlantilla,
       etiquetas,
-      fechaInicioUso,   
+      fechaInicioUso,
       fechaFinUso,
-      marcarComoActiva, 
-    } = req.body;
+      marcarComoActiva,
+    } = datos;
 
     if (!nombre) {
       return res
@@ -90,7 +109,6 @@ const crearRutina = async (req, res) => {
   } catch (error) {
     console.error("Error en crearRutina:", error);
 
-    // Si viene del pre("save") por semanas fuera de rango
     if (error.message && error.message.includes("Semana")) {
       return res.status(400).json({
         mensaje: error.message,
@@ -103,7 +121,6 @@ const crearRutina = async (req, res) => {
     });
   }
 };
-
 const listarRutinas = async (req, res) => {
   try {
     const entrenadorId = req.entrenador._id;
@@ -184,7 +201,24 @@ const actualizarRutina = async (req, res) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
-    const datosActualizados = req.body;
+
+    const camposPermitidos = [
+      "nombre",
+      "descripcion",
+      "objetivo",
+      "nivel",
+      "tipoSplit",
+      "diasPorSemana",
+      "semanasTotales",
+      "dias",
+      "estado",      
+      "esPlantilla",
+      "etiquetas",
+      "fechaInicioUso",
+      "fechaFinUso",
+    ];
+
+    const datosActualizados = filtrarCampos(req.body, camposPermitidos);
 
     const rutina = await Rutina.findOneAndUpdate(
       { _id: id, entrenadorId, eliminado: false },
@@ -217,6 +251,7 @@ const actualizarRutina = async (req, res) => {
     });
   }
 };
+
 
 const archivarRutina = async (req, res) => {
   try {

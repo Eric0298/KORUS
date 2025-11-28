@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const verificarToken = require("../middleware/authMiddleware");
+const validarObjectId = require("../middleware/validarObjectId");
 
 const {
   crearEjercicio,
@@ -13,10 +14,11 @@ const {
 
 router.use(verificarToken);
 
-router.post("/", crearEjercicio);       
-router.get("/", listarEjercicios);      
-router.get("/:id", obtenerEjercicio);   
-router.put("/:id", actualizarEjercicio);
-router.delete("/:id", archivarEjercicio); 
+router.post("/", crearEjercicio);
+router.get("/", listarEjercicios);
+
+router.get("/:id", validarObjectId("id"), obtenerEjercicio);
+router.put("/:id", validarObjectId("id"), actualizarEjercicio);
+router.delete("/:id", validarObjectId("id"), archivarEjercicio);
 
 module.exports = router;

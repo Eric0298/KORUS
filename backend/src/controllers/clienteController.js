@@ -1,5 +1,5 @@
 const Cliente = require("../models/Cliente");
-
+const filtrarCampos = require("../utils/filtrarCampos");
 const crearCliente = async (req, res)=>{
     try {
         const entrenadorId = req.entrenador._id
@@ -129,8 +129,31 @@ const actualizarCliente = async (req, res) => {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
 
-    const datosActualizados = req.body;
-
+    const camposPermitidos = [
+  "nombre",
+  "apellidos",
+  "nombreMostrar",
+  "correo",
+  "telefono",
+  "fechaNacimiento",
+  "sexo",
+  "fotoPerfilUrl",
+  "objetivoPrincipal",
+  "objetivoSecundario",
+  "descripcionObjetivos",
+  "nivelGeneral",
+  "experienciaDeportiva",
+  "estado", 
+  "notas",
+  "pesoInicialKg",
+  "pesoActualKg",
+  "alturaCm",
+  "porcentajeGrasa",
+  "frecuenciaCardiacaReposo",
+  "preferencias",
+  "etiquetas",
+];
+const datosActualizados = filtrarCampos(req.body, camposPermitidos);
     const cliente = await Cliente.findOneAndUpdate(
       { _id: id, entrenadorId, eliminado: false },
       datosActualizados,
