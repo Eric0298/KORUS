@@ -64,12 +64,13 @@ const preferenciasSchema = new mongoose.Schema(
 const clienteSchema = new mongoose.Schema(
   {
     
-    entrenadorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Entrenador",
-      required: true,
-      index: true,
-    },
+    entrenadores: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Entrenador",
+    index: true
+  }
+],
 
     
     nombre: {
@@ -261,8 +262,8 @@ clienteSchema.pre("save", function (next) {
 });
 
 
-clienteSchema.index({ entrenadorId: 1, estado: 1 });
-clienteSchema.index({ entrenadorId: 1, nombreMostrar: 1 });
-clienteSchema.index({ entrenadorId: 1, objetivoPrincipal: 1 });
+clienteSchema.index({ entrenadores: 1, estado: 1 });
+clienteSchema.index({ entrenadores: 1, nombreMostrar: 1 });
+clienteSchema.index({ entrenadores: 1, objetivoPrincipal: 1 });
 
 module.exports = mongoose.model("Cliente", clienteSchema);

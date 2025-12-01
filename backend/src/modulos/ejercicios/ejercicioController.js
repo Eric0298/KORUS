@@ -1,30 +1,13 @@
-const Ejercicio = require("./Ejercicio");
-const filtrarCampos = require("../../comun/utils/filtrarCampos");
-const crearEjercicio = async(req, res)=>{
-    try {
+const ejercicioService = require("./ejercicioService");
+
+const crearEjercicio = async (req, res, next) => {
+  try {
     const entrenadorId = req.entrenador._id;
 
-    const camposPermitidos = [
-      "nombre",
-      "grupoMuscular",
-      "descripcion",
-      "equipoNecesario",
-      "videoUrl",
-      "etiquetas",
-    ];
-
-    const datos = filtrarCampos(req.body, camposPermitidos);
-
-    if (!datos.nombre) {
-      return res.status(400).json({
-        mensaje: "El nombre del ejercicio es obligatorio",
-      });
-    }
-
-    const nuevoEjercicio = await Ejercicio.create({
+    const nuevoEjercicio = await ejercicioService.crearEjercicio(
       entrenadorId,
-      ...datos,
-    });
+      req.body
+    );
 
     return res.status(201).json({
       mensaje: "Ejercicio creado correctamente",
@@ -32,28 +15,19 @@ const crearEjercicio = async(req, res)=>{
     });
   } catch (error) {
     console.error("Error en crearEjercicio:", error);
-    return res.status(500).json({
-      mensaje: "Error en el servidor al crear el ejercicio",
-      error: error.message,
-    });
+    next(error);
   }
 };
-const listarEjercicios = async (req, res) => {
+
+const listarEjercicios = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { grupoMuscular, etiqueta } = req.query;
 
-    const filtro = {
-      entrenadorId,
-      eliminado: false,
-    };
-
-    if (grupoMuscular) filtro.grupoMuscular = grupoMuscular;
-    if (etiqueta) filtro.etiquetas = etiqueta;
-
-    const ejercicios = await Ejercicio.find(filtro)
-      .sort({ nombre: 1 })
-      .lean();
+    const ejercicios = await ejercicioService.listarEjercicios(entrenadorId, {
+      grupoMuscular,
+      etiqueta,
+    });
 
     return res.json({
       mensaje: "Listado de ejercicios",
@@ -61,28 +35,19 @@ const listarEjercicios = async (req, res) => {
     });
   } catch (error) {
     console.error("Error en listarEjercicios:", error);
-    return res.status(500).json({
-      mensaje: "Error en el servidor al listar ejercicios",
-      error: error.message,
-    });
+    next(error);
   }
 };
-const obtenerEjercicio = async (req, res) => {
+
+const obtenerEjercicio = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
 
-    const ejercicio = await Ejercicio.findOne({
-      _id: id,
+    const ejercicio = await ejercicioService.obtenerEjercicioPorId(
       entrenadorId,
-      eliminado: false,
-    });
-
-    if (!ejercicio) {
-      return res.status(404).json({
-        mensaje: "Ejercicio no encontrado",
-      });
-    }
+      id
+    );
 
     return res.json({
       mensaje: "Ejercicio encontrado",
@@ -90,79 +55,48 @@ const obtenerEjercicio = async (req, res) => {
     });
   } catch (error) {
     console.error("Error en obtenerEjercicio:", error);
-    return res.status(500).json({
-      mensaje: "Error en el servidor al obtener el ejercicio",
-      error: error.message,
-    });
+    next(error);
   }
 };
-const actualizarEjercicio = async (req, res) => {
+
+const actualizarEjercicio = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
 
-    const camposPermitidos = [
-      "nombre",
-      "grupoMuscular",
-      "descripcion",
-      "equipoNecesario",
-      "videoUrl",
-      "etiquetas",
-    ];
-
-    const datosActualizados = filtrarCampos(req.body, camposPermitidos);
-
-    const ejercicio = await Ejercicio.findOneAndUpdate(
-      { _id: id, entrenadorId, eliminado: false },
-      datosActualizados,
-      { new: true, runValidators: true }
+    const ejercicioActualizado = await ejercicioService.actualizarEjercicio(
+      entrenadorId,
+      id,
+      req.body
     );
-
-    if (!ejercicio) {
-      return res.status(404).json({
-        mensaje: "Ejercicio no encontrado",
-      });
-    }
 
     return res.json({
       mensaje: "Ejercicio actualizado correctamente",
-      ejercicio,
+      ejercicio: ejercicioActualizado,
     });
   } catch (error) {
     console.error("Error en actualizarEjercicio:", error);
-    return res.status(500).json({
-      mensaje: "Error en el servidor al actualizar el ejercicio",
-      error: error.message,
-    });
+    next(error);
   }
 };
-const archivarEjercicio = async (req, res) => {
+
+const archivarEjercicio = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
 
-    const ejercicio = await Ejercicio.findOneAndUpdate(
-      { _id: id, entrenadorId, eliminado: false },
-      { eliminado: true },
-      { new: true }
+    const ejercicioArchivado = await ejercicioService.archivarEjercicio(
+      entrenadorId,
+      id
     );
-
-    if (!ejercicio) {
-      return res.status(404).json({
-        mensaje: "Ejercicio no encontrado",
-      });
-    }
 
     return res.json({
       mensaje: "Ejercicio archivado correctamente",
-      ejercicio,
+      ejercicio: ejercicioArchivado,
     });
   } catch (error) {
     console.error("Error en archivarEjercicio:", error);
-    return res.status(500).json({
-      mensaje: "Error en el servidor al archivar el ejercicio",
-      error: error.message,
-    });
+    next(error);
   }
 };
 

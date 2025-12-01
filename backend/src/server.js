@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const corsOptions = require("./comun/infraestructura/corsConfig");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const dotenv = require("dotenv");
@@ -22,7 +23,7 @@ connectDB();
 app.use(helmet());
 
 
-app.use(cors());
+app.use(cors(corsOptions));
 
 
 app.use(express.json());
