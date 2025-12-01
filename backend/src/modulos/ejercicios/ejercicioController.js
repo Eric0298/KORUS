@@ -1,5 +1,5 @@
-const Ejercicio = require("../models/Ejercicio");
-const filtrarCampos = require("../utils/filtrarCampos");
+const Ejercicio = require("./Ejercicio");
+const filtrarCampos = require("../../comun/utils/filtrarCampos");
 const crearEjercicio = async(req, res)=>{
     try {
     const entrenadorId = req.entrenador._id;

@@ -1,5 +1,5 @@
-const Cliente = require("../models/Cliente");
-const filtrarCampos = require("../utils/filtrarCampos");
+const Cliente = require("./Cliente");
+const filtrarCampos = require("../../comun/utils/filtrarCampos");
 const crearCliente = async (req, res)=>{
     try {
         const entrenadorId = req.entrenador._id

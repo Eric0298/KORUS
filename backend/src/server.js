@@ -3,15 +3,15 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const dotenv = require("dotenv");
-const connectDB = require("./config/db");
+const connectDB = require("./comun/infraestructura/db");
 
-const authRoutes = require("./routes/authRoutes");
-const verificarToken = require("./middleware/authMiddleware");
-const clienteRoutes = require("./routes/clienteRoutes");
-const rutinaRoutes = require("./routes/rutinaRoutes");
-const ejercicioRoutes = require("./routes/ejercicioRoutes");
+const authRoutes = require("./modulos/auth/authRoutes");
+const verificarToken = require("./comun/infraestructura/middlewares/authMiddleware");
+const clienteRoutes = require("./modulos/clientes/clienteRoutes");
+const rutinaRoutes = require("./modulos/rutinas/rutinaRoutes");
+const ejercicioRoutes = require("./modulos/ejercicios/ejercicioRoutes");
 
-const { notFound, errorHandler } = require("./middleware/errorMiddleware");
+const { notFound, errorHandler } = require("./comun/infraestructura/middlewares/errorMiddleware");
 
 dotenv.config();
 

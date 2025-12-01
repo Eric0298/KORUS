@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const Entrenador = require("../models/Entrenador");
+const Entrenador = require("../../../modulos/entrenadores/Entrenador");
 const verificarToken = async(req, res, next)=>{
     try{
         if(!process.env.JWT_SECRET){

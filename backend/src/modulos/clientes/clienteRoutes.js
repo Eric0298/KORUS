@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const verificarToken = require("../middleware/authMiddleware");
-const validarObjectId = require("../middleware/validarObjectId");
+const verificarToken = require("../../comun/infraestructura/middlewares/authMiddleware");
+const validarObjectId = require("../../comun/infraestructura/middlewares/validarObjectId");
 const{
    crearCliente,
   listarClientes,
   obtenerCliente,
   actualizarCliente,
   archivarCliente, 
-}= require("../controllers/clienteController");
+}= require("./clienteController");
 router.use(verificarToken);
 router.post("/", crearCliente);
 router.get("/", listarClientes);

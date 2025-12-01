@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const verificarToken = require("../middleware/authMiddleware");
-const validarObjectId = require("../middleware/validarObjectId");
+const verificarToken = require("../../comun/infraestructura/middlewares/authMiddleware");
+const validarObjectId = require("../../comun/infraestructura/middlewares/validarObjectId");
 
 const {
   crearEjercicio,
@@ -10,7 +10,7 @@ const {
   obtenerEjercicio,
   actualizarEjercicio,
   archivarEjercicio,
-} = require("../controllers/ejercicioController");
+} = require("./ejercicioController");
 
 router.use(verificarToken);
 

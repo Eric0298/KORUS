@@ -1,4 +1,4 @@
-const Entrenador = require("../models/Entrenador");
+const Entrenador = require("../entrenadores/Entrenador");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 

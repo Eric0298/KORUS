@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const verificarToken = require("../middleware/authMiddleware");
-const validarObjectId = require("../middleware/validarObjectId");
+const verificarToken = require("../../comun/infraestructura/middlewares/authMiddleware");
+const validarObjectId = require("../../comun/infraestructura/middlewares/validarObjectId");
 
 const {
   crearRutina,
@@ -12,7 +12,7 @@ const {
   archivarRutina,
   asignarRutinaACliente,
   quitarRutinaActivaDeCliente,
-} = require("../controllers/rutinaController");
+} = require("./rutinaController");
 
 router.use(verificarToken);
 
