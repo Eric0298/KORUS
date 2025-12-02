@@ -7,6 +7,10 @@ const rateLimit = require("express-rate-limit");
 const dotenv = require("dotenv");
 const connectDB = require("./comun/infraestructura/db");
 
+// Logger personalizado
+const logger = require("./comun/infraestructura/logger");
+const requestLogger = require("./comun/infraestructura/middlewares/requestLogger");
+
 // Rutas / módulos
 const authRoutes = require("./modulos/auth/authRoutes");
 const verificarToken = require("./comun/infraestructura/middlewares/authMiddleware");
@@ -28,13 +32,16 @@ connectDB();
 // Seguridad básica
 app.use(helmet());
 
+// Logger de peticiones (cada request se registra)
+app.use(requestLogger);
+
 // CORS controlado por .env (CORS_ORIGINS)
 app.use(cors(corsOptions));
 
 // Body parser
 app.use(express.json());
 
-// Healthcheck público (sin auth)
+// Healthcheck público
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
@@ -44,10 +51,10 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Rate limit SOLO para auth (para evitar fuerza bruta)
+// Rate limit SOLO para auth (anti fuerza-bruta)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // máx 100 peticiones por IP en ese intervalo
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -56,7 +63,7 @@ const authLimiter = rateLimit({
   },
 });
 
-// Rutas públicas (auth) con rate-limit aplicado
+// Rutas públicas
 app.use("/api/auth", authLimiter, authRoutes);
 
 // Ruta protegida de prueba/perfil
@@ -67,10 +74,10 @@ app.get("/api/entrenador/perfil", verificarToken, (req, res) => {
   });
 });
 
-// Rutas protegidas con JWT
-app.use("/api/clientes", clienteRoutes);
-app.use("/api/rutinas", rutinaRoutes);
-app.use("/api/ejercicios", ejercicioRoutes);
+// Rutas protegidas
+app.use("/api/clientes", verificarToken, clienteRoutes);
+app.use("/api/rutinas", verificarToken, rutinaRoutes);
+app.use("/api/ejercicios", verificarToken, ejercicioRoutes);
 
 // Middlewares finales
 app.use(notFound);
@@ -80,8 +87,8 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(
-    `Servidor KORUS escuchando en http://localhost:${PORT} (NODE_ENV: ${
+  logger.info(
+    `Servidor KORUS escuchando en http://localhost:${PORT} (MODE: ${
       process.env.NODE_ENV || "development"
     })`
   );
