@@ -1,5 +1,6 @@
 const Ejercicio = require("./Ejercicio");
 const filtrarCampos = require("../../comun/utils/filtrarCampos");
+const parseSort = require("../../comun/utils/parseSort");
 const camposPermitidosCrear = [
   "nombre",
   "grupoMuscular",
@@ -36,7 +37,7 @@ const crearEjercicio = async (entrenadorId, data) => {
 };
 
 const listarEjercicios = async (entrenadorId, filtros = {}) => {
-  const { grupoMuscular, etiqueta } = filtros;
+  const { grupoMuscular, etiqueta, page, limit, search, sort } = filtros;
 
   const filtro = {
     entrenadorId,
@@ -46,8 +47,59 @@ const listarEjercicios = async (entrenadorId, filtros = {}) => {
   if (grupoMuscular) filtro.grupoMuscular = grupoMuscular;
   if (etiqueta) filtro.etiquetas = etiqueta;
 
-  const ejercicios = await Ejercicio.find(filtro).sort({ nombre: 1 }).lean();
-  return ejercicios;
+  // BÚSQUEDA POR TEXTO (nombre, grupoMuscular, etiquetas)
+  if (search && search.trim() !== "") {
+    const regex = new RegExp(search.trim(), "i");
+    filtro.$or = [
+      { nombre: regex },
+      { grupoMuscular: regex },
+      { etiquetas: regex },
+    ];
+  }
+
+  // ORDENACIÓN (nombre asc por defecto)
+  const sortOption = parseSort(
+    sort,
+    ["nombre", "grupoMuscular", "createdAt"],
+    { nombre: 1 }
+  );
+
+  // --- PAGINACIÓN OPCIONAL ---
+  let pageNum = parseInt(page, 10);
+  let limitNum = parseInt(limit, 10);
+
+  const usarPaginacion = !isNaN(pageNum) && !isNaN(limitNum);
+
+  if (!usarPaginacion) {
+    const ejercicios = await Ejercicio.find(filtro).sort(sortOption).lean();
+    return {
+      ejercicios,
+      paginacion: null,
+    };
+  }
+
+  const skip = (pageNum - 1) * limitNum;
+
+  const [ejercicios, total] = await Promise.all([
+    Ejercicio.find(filtro)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    Ejercicio.countDocuments(filtro),
+  ]);
+
+  const totalPages = Math.ceil(total / limitNum);
+
+  return {
+    ejercicios,
+    paginacion: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages,
+    },
+  };
 };
 
 const obtenerEjercicioPorId = async (entrenadorId, id) => {

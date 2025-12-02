@@ -1,6 +1,7 @@
 const Rutina = require("./Rutina");
 const Cliente = require("../clientes/Cliente");
 const filtrarCampos = require("../../comun/utils/filtrarCampos");
+const parseSort = require("../../comun/utils/parseSort")
 const camposPermitidosActualizar = [
   "nombre",
   "descripcion",
@@ -116,7 +117,7 @@ const crearRutina = async (entrenadorId, data) => {
 };
 
 const listarRutinas = async (entrenadorId, query = {}) => {
-  const { clienteId, estado, esPlantilla } = query;
+  const { clienteId, estado, esPlantilla, page, limit, search, sort } = query;
 
   const filtro = {
     entrenadorId,
@@ -137,15 +138,73 @@ const listarRutinas = async (entrenadorId, query = {}) => {
     filtro.esPlantilla = false;
   }
 
-  const rutinas = await Rutina.find(filtro)
-    .select(
-      "nombre descripcion objetivo nivel tipoSplit diasPorSemana semanasTotales estado esPlantilla etiquetas clienteId fechaInicioUso fechaFinUso createdAt"
-    )
-    .populate("clienteId", "nombre nombreMostrar estado")
-    .sort({ createdAt: -1 })
-    .lean();
+  //  BÚSQUEDA POR TEXTO (nombre, descripcion, objetivo, nivel, tipoSplit, etiquetas)
+  if (search && search.trim() !== "") {
+    const regex = new RegExp(search.trim(), "i");
+    filtro.$or = [
+      { nombre: regex },
+      { descripcion: regex },
+      { objetivo: regex },
+      { nivel: regex },
+      { tipoSplit: regex },
+      { etiquetas: regex },
+    ];
+  }
 
-  return rutinas;
+  //  ORDENACIÓN (por defecto createdAt desc)
+  const sortOption = parseSort(
+    sort,
+    ["nombre", "createdAt", "objetivo", "nivel", "estado"],
+    { createdAt: -1 }
+  );
+
+  // --- PAGINACIÓN OPCIONAL ---
+  let pageNum = parseInt(page, 10);
+  let limitNum = parseInt(limit, 10);
+
+  const usarPaginacion = !isNaN(pageNum) && !isNaN(limitNum);
+
+  if (!usarPaginacion) {
+    const rutinas = await Rutina.find(filtro)
+      .select(
+        "nombre descripcion objetivo nivel tipoSplit diasPorSemana semanasTotales estado esPlantilla etiquetas clienteId fechaInicioUso fechaFinUso createdAt"
+      )
+      .populate("clienteId", "nombre nombreMostrar estado")
+      .sort(sortOption)
+      .lean();
+
+    return {
+      rutinas,
+      paginacion: null,
+    };
+  }
+
+  const skip = (pageNum - 1) * limitNum;
+
+  const [rutinas, total] = await Promise.all([
+    Rutina.find(filtro)
+      .select(
+        "nombre descripcion objetivo nivel tipoSplit diasPorSemana semanasTotales estado esPlantilla etiquetas clienteId fechaInicioUso fechaFinUso createdAt"
+      )
+      .populate("clienteId", "nombre nombreMostrar estado")
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    Rutina.countDocuments(filtro),
+  ]);
+
+  const totalPages = Math.ceil(total / limitNum);
+
+  return {
+    rutinas,
+    paginacion: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages,
+    },
+  };
 };
 
 const obtenerRutinaPorId = async (entrenadorId, id) => {

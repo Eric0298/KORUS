@@ -1,116 +1,54 @@
-const Cliente = require("./Cliente");
-const filtrarCampos = require("../../comun/utils/filtrarCampos");
-const crearCliente = async (req, res)=>{
-    try {
-        const entrenadorId = req.entrenador._id
-        const{
-           nombre,
-      apellidos,
-      nombreMostrar,
-      correo,
-      telefono,
-      fechaNacimiento,
-      sexo,
-      fotoPerfilUrl,
-      objetivoPrincipal,
-      objetivoSecundario,
-      descripcionObjetivos,
-      nivelGeneral,
-      experienciaDeportiva,
-      estado,
-      notas,
-      pesoInicialKg,
-      pesoActualKg,
-      alturaCm,
-      porcentajeGrasa,
-      frecuenciaCardiacaReposo,
-      preferencias,
-      etiquetas,  
-        }=req.body;
-        if(!nombre){
-            return res.status(400).json({
-                mensaje:"El nombre del cliente es obligatorio",
-            });
-        }
-        const nuevoCliente = await Cliente.create({
+const clienteService = require("./clienteService");
+
+const crearCliente = async (req, res, next) => {
+  try {
+    const entrenadorId = req.entrenador._id;
+
+    const nuevoCliente = await clienteService.crearCliente(
       entrenadorId,
-      nombre,
-      apellidos,
-      nombreMostrar,
-      correo,
-      telefono,
-      fechaNacimiento,
-      sexo,
-      fotoPerfilUrl,
-      objetivoPrincipal,
-      objetivoSecundario,
-      descripcionObjetivos,
-      nivelGeneral,
-      experienciaDeportiva,
-      estado,
-      notas,
-      pesoInicialKg,
-      pesoActualKg,
-      alturaCm,
-      porcentajeGrasa,
-      frecuenciaCardiacaReposo,
-      preferencias,
-      etiquetas,
-    });
+      req.body
+    );
+
     return res.status(201).json({
       mensaje: "Cliente creado correctamente",
       cliente: nuevoCliente,
     });
-    } catch (error) {
-        console.error("Error en crearCliente:", error);
-     return res.status(500).json({
-      mensaje: "Error en el servidor al crear el cliente",
-      error: error.message,
+  } catch (error) {
+    console.error("Error en crearCliente:", error);
+    next(error);
+  }
+};
+
+const listarClientes = async (req, res, next) => {
+  try {
+    const entrenadorId = req.entrenador._id;
+    const { estado, page, limit, search, sort } = req.query;
+
+    const { clientes, paginacion } = await clienteService.listarClientes(
+      entrenadorId,
+      { estado, page, limit, search, sort }
+    );
+
+    return res.json({
+      mensaje: "Listado de clientes",
+      clientes,
+      paginacion,
     });
-    }
+  } catch (error) {
+    console.error("Error en listarClientes:", error);
+    next(error);
+  }
 };
-const listarClientes  = async (req,res)=>{
-    try {
-        const entrenadorId = req.entrenador._id;
-        const {estado} = req.query;
-        const filtro ={
-            entrenadorId,
-            eliminado: false,
-        };
-        if(estado){
-            filtro.estado = estado;
-        }else{
-            filtro.estado = {$ne: "archivado"}
-        }
-        const clientes = await Cliente.find(filtro).sort({createdAt:-1});
-        return res.json({
-            mensaje: "Listado de clientes",
-            clientes,
-        });
-    } catch (error) {
-        console.error("Error en listarClientes:", error);
-        return res.status(500).json({
-            mensaje: "Error en el servidor al listar clientes",
-            error: error.message,
-        });
-    }
-};
-const obtenerCliente = async (req, res) => {
+
+const obtenerCliente = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
 
-    const cliente = await Cliente.findOne({
-      _id: id,
+    const cliente = await clienteService.obtenerClientePorId(
       entrenadorId,
-      eliminado: false,
-    });
-
-    if (!cliente) {
-      return res.status(404).json({
-        mensaje: "Cliente no encontrado",
-      });
-    }
+      id
+    );
 
     return res.json({
       mensaje: "Cliente encontrado",
@@ -118,98 +56,51 @@ const obtenerCliente = async (req, res) => {
     });
   } catch (error) {
     console.error("Error en obtenerCliente:", error);
-    return res.status(500).json({
-      mensaje: "Error en el servidor al obtener el cliente",
-      error: error.message,
-    });
+    next(error);
   }
 };
-const actualizarCliente = async (req, res) => {
-  try{
-    const entrenadorId = req.entrenador._id;
-    const { id } = req.params;
 
-    const camposPermitidos = [
-  "nombre",
-  "apellidos",
-  "nombreMostrar",
-  "correo",
-  "telefono",
-  "fechaNacimiento",
-  "sexo",
-  "fotoPerfilUrl",
-  "objetivoPrincipal",
-  "objetivoSecundario",
-  "descripcionObjetivos",
-  "nivelGeneral",
-  "experienciaDeportiva",
-  "estado", 
-  "notas",
-  "pesoInicialKg",
-  "pesoActualKg",
-  "alturaCm",
-  "porcentajeGrasa",
-  "frecuenciaCardiacaReposo",
-  "preferencias",
-  "etiquetas",
-];
-const datosActualizados = filtrarCampos(req.body, camposPermitidos);
-    const cliente = await Cliente.findOneAndUpdate(
-      { _id: id, entrenadorId, eliminado: false },
-      datosActualizados,
-      { new: true, runValidators: true }
-    );
-
-    if (!cliente) {
-      return res.status(404).json({
-        mensaje: "Cliente no encontrado",
-      });
-    }
-
-    return res.json({
-      mensaje: "Cliente actualizado correctamente",
-      cliente,
-    });
-  }catch (error) {
-    console.error("Error en actualizarCliente:", error);
-    return res.status(500).json({
-      mensaje: "Error en el servidor al actualizar el cliente",
-      error: error.message,
-    });
-  }
-};
-const archivarCliente = async (req, res) => {
+const actualizarCliente = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
 
-    const cliente = await Cliente.findOneAndUpdate(
-      { _id: id, entrenadorId, eliminado: false },
-      {
-        estado: "archivado",
-        eliminado: true,
-      },
-      { new: true }
+    const clienteActualizado = await clienteService.actualizarCliente(
+      entrenadorId,
+      id,
+      req.body
     );
 
-    if (!cliente) {
-      return res.status(404).json({
-        mensaje: "Cliente no encontrado",
-      });
-    }
+    return res.json({
+      mensaje: "Cliente actualizado correctamente",
+      cliente: clienteActualizado,
+    });
+  } catch (error) {
+    console.error("Error en actualizarCliente:", error);
+    next(error);
+  }
+};
+
+const archivarCliente = async (req, res, next) => {
+  try {
+    const entrenadorId = req.entrenador._id;
+    const { id } = req.params;
+
+    const clienteArchivado = await clienteService.archivarCliente(
+      entrenadorId,
+      id
+    );
 
     return res.json({
       mensaje: "Cliente archivado correctamente",
-      cliente,
+      cliente: clienteArchivado,
     });
   } catch (error) {
     console.error("Error en archivarCliente:", error);
-    return res.status(500).json({
-      mensaje: "Error en el servidor al archivar el cliente",
-      error: error.message,
-    });
+    next(error);
   }
 };
+
 module.exports = {
   crearCliente,
   listarClientes,

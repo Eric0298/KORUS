@@ -1,5 +1,6 @@
 const Cliente = require("./Cliente");
 const filtrarCampos = require("../../utils/filtrarCampos");
+const parseSort = require("../../comun/utils/parseSort");
 
 // Campos permitidos al crear un cliente
 const camposPermitidosCrear = [
@@ -70,22 +71,73 @@ const crearCliente = async (entrenadorId, data) => {
   return nuevoCliente;
 };
 
-const listarClientes = async (entrenadorId, estadoQuery) => {
+const listarClientes = async (entrenadorId, opciones = {}) => {
+  const { estado, page, limit, search, sort } = opciones;
+
   const filtro = {
-    entrenadores: entrenadorId, // 👈 array que contiene ese entrenador
+    entrenadores: entrenadorId,
     eliminado: false,
   };
 
-  if (estadoQuery) {
-    filtro.estado = estadoQuery;
+  // Filtro por estado
+  if (estado) {
+    filtro.estado = estado;
   } else {
     filtro.estado = { $ne: "archivado" };
   }
 
-  const clientes = await Cliente.find(filtro).sort({ createdAt: -1 });
-  return clientes;
-};
+  // BÚSQUEDA POR TEXTO (nombre, apellidos, nombreMostrar, correo, telefono)
+  if (search && search.trim() !== "") {
+    const regex = new RegExp(search.trim(), "i"); // i = case-insensitive
+    filtro.$or = [
+      { nombre: regex },
+      { apellidos: regex },
+      { nombreMostrar: regex },
+      { correo: regex },
+      { telefono: regex },
+    ];
+  }
 
+  // ORDENACIÓN
+  const sortOption = parseSort(
+    sort,
+    ["nombreMostrar", "createdAt", "objetivoPrincipal", "estado"],
+    { createdAt: -1 } // por defecto: más recientes primero
+  );
+
+  // --- PAGINACIÓN OPCIONAL ---
+  let pageNum = parseInt(page, 10);
+  let limitNum = parseInt(limit, 10);
+
+  const usarPaginacion = !isNaN(pageNum) && !isNaN(limitNum);
+
+  if (!usarPaginacion) {
+    const clientes = await Cliente.find(filtro).sort(sortOption);
+    return {
+      clientes,
+      paginacion: null,
+    };
+  }
+
+  const skip = (pageNum - 1) * limitNum;
+
+  const [clientes, total] = await Promise.all([
+    Cliente.find(filtro).sort(sortOption).skip(skip).limit(limitNum),
+    Cliente.countDocuments(filtro),
+  ]);
+
+  const totalPages = Math.ceil(total / limitNum);
+
+  return {
+    clientes,
+    paginacion: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages,
+    },
+  };
+};
 const obtenerClientePorId = async (entrenadorId, id) => {
   const cliente = await Cliente.findOne({
     _id: id,

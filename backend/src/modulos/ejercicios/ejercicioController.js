@@ -22,16 +22,17 @@ const crearEjercicio = async (req, res, next) => {
 const listarEjercicios = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
-    const { grupoMuscular, etiqueta } = req.query;
+    const { grupoMuscular, etiqueta, page, limit, search, sort } = req.query;
 
-    const ejercicios = await ejercicioService.listarEjercicios(entrenadorId, {
-      grupoMuscular,
-      etiqueta,
-    });
+    const { ejercicios, paginacion } = await ejercicioService.listarEjercicios(
+      entrenadorId,
+      { grupoMuscular, etiqueta, page, limit, search, sort }
+    );
 
     return res.json({
       mensaje: "Listado de ejercicios",
       ejercicios,
+      paginacion,
     });
   } catch (error) {
     console.error("Error en listarEjercicios:", error);

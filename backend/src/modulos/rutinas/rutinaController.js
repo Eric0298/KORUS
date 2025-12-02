@@ -19,18 +19,25 @@ const crearRutina = async (req, res, next) => {
 const listarRutinas = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
+    const { clienteId, estado, esPlantilla, page, limit, search, sort } =
+      req.query;
 
-    const rutinas = await rutinaService.listarRutinas(entrenadorId, req.query);
+    const { rutinas, paginacion } = await rutinaService.listarRutinas(
+      entrenadorId,
+      { clienteId, estado, esPlantilla, page, limit, search, sort }
+    );
 
     return res.json({
       mensaje: "Listado de rutinas",
       rutinas,
+      paginacion,
     });
   } catch (error) {
     console.error("Error en listarRutinas:", error);
     next(error);
   }
 };
+
 
 const obtenerRutina = async (req, res, next) => {
   try {
