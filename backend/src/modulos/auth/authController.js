@@ -1,5 +1,5 @@
 const entrenadorService = require("../entrenadores/entrenadorService");
-const { enviarRespuestaOk } = require("../../comun/infraestructura/responder");
+const { enviarRespuestaOk } = require("../../comun/infraestructura/response");
 
 const registrarEntrenador = async (req, res, next) => {
   try {

@@ -1,4 +1,4 @@
-const rutinaService = require("./rutinaService");
+const ejercicioService = require("./ejercicioService");
 const { enviarRespuestaOk } = require("../../comun/infraestructura/response");
 
 const crearEjercicio = async (req, res, next) => {
