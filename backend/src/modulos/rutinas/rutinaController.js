@@ -1,14 +1,19 @@
 const rutinaService = require("./rutinaService");
+const { enviarRespuestaOk } = require("../../comun/infraestructura/response");
 
 const crearRutina = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
 
-    const nuevaRutina = await rutinaService.crearRutina(entrenadorId, req.body);
+    const nuevaRutina = await rutinaService.crearRutina(
+      entrenadorId,
+      req.body
+    );
 
-    return res.status(201).json({
-      mensaje: "Rutina creado correctamente",
-      rutina: nuevaRutina,
+    return enviarRespuestaOk(res, {
+      statusCode: 201,
+      mensaje: "Rutina creada correctamente",
+      body: { rutina: nuevaRutina },
     });
   } catch (error) {
     console.error("Error en crearRutina:", error);
@@ -27,17 +32,15 @@ const listarRutinas = async (req, res, next) => {
       { clienteId, estado, esPlantilla, page, limit, search, sort }
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Listado de rutinas",
-      rutinas,
-      paginacion,
+      body: { rutinas, paginacion },
     });
   } catch (error) {
     console.error("Error en listarRutinas:", error);
     next(error);
   }
 };
-
 
 const obtenerRutina = async (req, res, next) => {
   try {
@@ -46,9 +49,9 @@ const obtenerRutina = async (req, res, next) => {
 
     const rutina = await rutinaService.obtenerRutinaPorId(entrenadorId, id);
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Rutina encontrada",
-      rutina,
+      body: { rutina },
     });
   } catch (error) {
     console.error("Error en obtenerRutina:", error);
@@ -60,16 +63,17 @@ const actualizarRutina = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
+    const datos = req.body;
 
     const rutinaActualizada = await rutinaService.actualizarRutina(
       entrenadorId,
       id,
-      req.body
+      datos
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Rutina actualizada correctamente",
-      rutina: rutinaActualizada,
+      body: { rutina: rutinaActualizada },
     });
   } catch (error) {
     console.error("Error en actualizarRutina:", error);
@@ -87,9 +91,9 @@ const archivarRutina = async (req, res, next) => {
       id
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Rutina archivada correctamente",
-      rutina: rutinaArchivada,
+      body: { rutina: rutinaArchivada },
     });
   } catch (error) {
     console.error("Error en archivarRutina:", error);
@@ -108,10 +112,9 @@ const asignarRutinaACliente = async (req, res, next) => {
       clienteId
     );
 
-    return res.json({
-      mensaje: "Rutina asignada como activa al cliente",
-      cliente,
-      rutina,
+    return enviarRespuestaOk(res, {
+      mensaje: "Rutina asignada correctamente al cliente",
+      body: { cliente, rutina },
     });
   } catch (error) {
     console.error("Error en asignarRutinaACliente:", error);
@@ -129,9 +132,9 @@ const quitarRutinaActivaDeCliente = async (req, res, next) => {
       clienteId
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Rutina activa eliminada del cliente",
-      cliente,
+      body: { cliente },
     });
   } catch (error) {
     console.error("Error en quitarRutinaActivaDeCliente:", error);

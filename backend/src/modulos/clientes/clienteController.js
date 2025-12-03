@@ -1,17 +1,16 @@
 const clienteService = require("./clienteService");
+const { enviarRespuestaOk } = require("../../comun/infraestructura/response");
 
 const crearCliente = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
 
-    const nuevoCliente = await clienteService.crearCliente(
-      entrenadorId,
-      req.body
-    );
+    const nuevoCliente = await clienteService.crearCliente(entrenadorId, req.body);
 
-    return res.status(201).json({
+    return enviarRespuestaOk(res, {
+      statusCode: 201,
       mensaje: "Cliente creado correctamente",
-      cliente: nuevoCliente,
+      body: { cliente: nuevoCliente },
     });
   } catch (error) {
     console.error("Error en crearCliente:", error);
@@ -29,10 +28,9 @@ const listarClientes = async (req, res, next) => {
       { estado, page, limit, search, sort }
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Listado de clientes",
-      clientes,
-      paginacion,
+      body: { clientes, paginacion },
     });
   } catch (error) {
     console.error("Error en listarClientes:", error);
@@ -45,14 +43,11 @@ const obtenerCliente = async (req, res, next) => {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
 
-    const cliente = await clienteService.obtenerClientePorId(
-      entrenadorId,
-      id
-    );
+    const cliente = await clienteService.obtenerClientePorId(entrenadorId, id);
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Cliente encontrado",
-      cliente,
+      body: { cliente },
     });
   } catch (error) {
     console.error("Error en obtenerCliente:", error);
@@ -71,9 +66,9 @@ const actualizarCliente = async (req, res, next) => {
       req.body
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Cliente actualizado correctamente",
-      cliente: clienteActualizado,
+      body: { cliente: clienteActualizado },
     });
   } catch (error) {
     console.error("Error en actualizarCliente:", error);
@@ -91,9 +86,9 @@ const archivarCliente = async (req, res, next) => {
       id
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Cliente archivado correctamente",
-      cliente: clienteArchivado,
+      body: { cliente: clienteArchivado },
     });
   } catch (error) {
     console.error("Error en archivarCliente:", error);

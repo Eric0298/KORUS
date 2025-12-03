@@ -1,4 +1,5 @@
-const ejercicioService = require("./ejercicioService");
+const rutinaService = require("./rutinaService");
+const { enviarRespuestaOk } = require("../../comun/infraestructura/response");
 
 const crearEjercicio = async (req, res, next) => {
   try {
@@ -9,9 +10,10 @@ const crearEjercicio = async (req, res, next) => {
       req.body
     );
 
-    return res.status(201).json({
+    return enviarRespuestaOk(res, {
+      statusCode: 201,
       mensaje: "Ejercicio creado correctamente",
-      ejercicio: nuevoEjercicio,
+      body: { ejercicio: nuevoEjercicio },
     });
   } catch (error) {
     console.error("Error en crearEjercicio:", error);
@@ -29,10 +31,9 @@ const listarEjercicios = async (req, res, next) => {
       { grupoMuscular, etiqueta, page, limit, search, sort }
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Listado de ejercicios",
-      ejercicios,
-      paginacion,
+      body: { ejercicios, paginacion },
     });
   } catch (error) {
     console.error("Error en listarEjercicios:", error);
@@ -50,9 +51,9 @@ const obtenerEjercicio = async (req, res, next) => {
       id
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Ejercicio encontrado",
-      ejercicio,
+      body: { ejercicio },
     });
   } catch (error) {
     console.error("Error en obtenerEjercicio:", error);
@@ -64,16 +65,17 @@ const actualizarEjercicio = async (req, res, next) => {
   try {
     const entrenadorId = req.entrenador._id;
     const { id } = req.params;
+    const datos = req.body;
 
     const ejercicioActualizado = await ejercicioService.actualizarEjercicio(
       entrenadorId,
       id,
-      req.body
+      datos
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Ejercicio actualizado correctamente",
-      ejercicio: ejercicioActualizado,
+      body: { ejercicio: ejercicioActualizado },
     });
   } catch (error) {
     console.error("Error en actualizarEjercicio:", error);
@@ -91,9 +93,9 @@ const archivarEjercicio = async (req, res, next) => {
       id
     );
 
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Ejercicio archivado correctamente",
-      ejercicio: ejercicioArchivado,
+      body: { ejercicio: ejercicioArchivado },
     });
   } catch (error) {
     console.error("Error en archivarEjercicio:", error);
