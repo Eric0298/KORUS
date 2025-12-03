@@ -1,19 +1,14 @@
 const entrenadorService = require("../entrenadores/entrenadorService");
+const { enviarRespuestaOk } = require("../../comun/infraestructura/responder");
 
 const registrarEntrenador = async (req, res, next) => {
   try {
-    const { nombre, correo, contrasena, telefono } = req.body;
+    const entrenador = await entrenadorService.registrarEntrenador(req.body);
 
-    const entrenadorData = await entrenadorService.registrarEntrenador({
-      nombre,
-      correo,
-      contrasena,
-      telefono,
-    });
-
-    return res.status(201).json({
+    return enviarRespuestaOk(res, {
+      statusCode: 201,
       mensaje: "Entrenador registrado correctamente",
-      entrenador: entrenadorData,
+      body: { entrenador },
     });
   } catch (error) {
     console.error("Error en registrarEntrenador:", error);
@@ -23,17 +18,13 @@ const registrarEntrenador = async (req, res, next) => {
 
 const loginEntrenador = async (req, res, next) => {
   try {
-    const { correo, contrasena } = req.body;
+    const { token, entrenador } = await entrenadorService.loginEntrenador(
+      req.body
+    );
 
-    const { token, entrenador } = await entrenadorService.loginEntrenador({
-      correo,
-      contrasena,
-    });
-
-    return res.json({
+    return enviarRespuestaOk(res, {
       mensaje: "Login correcto",
-      token,
-      entrenador,
+      body: { token, entrenador },
     });
   } catch (error) {
     console.error("Error en loginEntrenador:", error);

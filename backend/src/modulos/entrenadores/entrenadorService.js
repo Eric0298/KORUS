@@ -1,26 +1,33 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Entrenador = require("./Entrenador");
+const ApiError = require("../../comun/core/ApiError");
+
+const limpiarEntrenador = (entrenador) => {
+  if (!entrenador) return null;
+
+  return {
+    id: entrenador._id,
+    nombre: entrenador.nombre,
+    correo: entrenador.correo,
+    telefono: entrenador.telefono || null,
+    rol: entrenador.rol,
+    plan: entrenador.plan,
+  };
+};
+
 const validarCamposRegistro = ({ nombre, correo, contrasena }) => {
   if (!nombre) {
-    const error = new Error("El nombre es obligatorio");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "El nombre es obligatorio");
   }
   if (!correo) {
-    const error = new Error("El correo es obligatorio");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "El correo es obligatorio");
   }
   if (!contrasena) {
-    const error = new Error("La contraseña es obligatoria");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "La contraseña es obligatoria");
   }
   if (contrasena.length < 6) {
-    const error = new Error("La contraseña debe tener al menos 6 caracteres");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "La contraseña debe tener al menos 6 caracteres");
   }
 };
 
@@ -29,9 +36,10 @@ const registrarEntrenador = async ({ nombre, correo, contrasena, telefono }) => 
 
   const existente = await Entrenador.findOne({ correo });
   if (existente) {
-    const error = new Error("Ya hay un entrenador registrado con este correo");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(
+      400,
+      "Ya hay un entrenador registrado con este correo"
+    );
   }
 
   const hash = await bcrypt.hash(contrasena, 10);
@@ -43,50 +51,43 @@ const registrarEntrenador = async ({ nombre, correo, contrasena, telefono }) => 
     telefono: telefono || null,
   });
 
-  return {
-    id: entrenador._id,
-    nombre: entrenador.nombre,
-    correo: entrenador.correo,
-    telefono: entrenador.telefono,
-    rol: entrenador.rol,
-    plan: entrenador.plan,
-  };
+  return limpiarEntrenador(entrenador);
 };
 
 const loginEntrenador = async ({ correo, contrasena }) => {
   if (!correo) {
-    const error = new Error("El correo es obligatorio");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "El correo es obligatorio");
   }
   if (!contrasena) {
-    const error = new Error("La contraseña es obligatoria");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "La contraseña es obligatoria");
   }
 
   const entrenador = await Entrenador.findOne({ correo });
 
   if (!entrenador) {
-    const error = new Error("No existe ningún entrenador con ese correo");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(
+      404,
+      "No existe ningún entrenador con ese correo"
+    );
+  }
+
+  if (entrenador.estado !== "activo") {
+    throw new ApiError(403, "Cuenta suspendida o inactiva");
   }
 
   const esCorrecta = await bcrypt.compare(contrasena, entrenador.contrasena);
   if (!esCorrecta) {
-    const error = new Error("Contraseña incorrecta");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Contraseña incorrecta");
   }
 
   entrenador.ultimoAcceso = new Date();
   await entrenador.save();
 
   if (!process.env.JWT_SECRET) {
-    const error = new Error("Configuración de servidor incompleta (JWT)");
-    error.statusCode = 500;
-    throw error;
+    throw new ApiError(
+      500,
+      "Configuración de servidor incompleta (JWT)"
+    );
   }
 
   const token = jwt.sign(
@@ -97,14 +98,7 @@ const loginEntrenador = async ({ correo, contrasena }) => {
 
   return {
     token,
-    entrenador: {
-      id: entrenador._id,
-      nombre: entrenador.nombre,
-      correo: entrenador.correo,
-      telefono: entrenador.telefono,
-      rol: entrenador.rol,
-      plan: entrenador.plan,
-    },
+    entrenador: limpiarEntrenador(entrenador),
   };
 };
 
