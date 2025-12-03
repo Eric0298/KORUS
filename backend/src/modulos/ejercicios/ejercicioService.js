@@ -1,16 +1,9 @@
 const Ejercicio = require("./Ejercicio");
 const filtrarCampos = require("../../comun/utils/filtrarCampos");
 const parseSort = require("../../comun/utils/parseSort");
-const camposPermitidosCrear = [
-  "nombre",
-  "grupoMuscular",
-  "descripcion",
-  "equipoNecesario",
-  "videoUrl",
-  "etiquetas",
-];
+const ApiError = require("../../comun/core/ApiError");
 
-const camposPermitidosActualizar = [
+const CAMPOS_PERMITIDOS = [
   "nombre",
   "grupoMuscular",
   "descripcion",
@@ -20,12 +13,10 @@ const camposPermitidosActualizar = [
 ];
 
 const crearEjercicio = async (entrenadorId, data) => {
-  const datos = filtrarCampos(data, camposPermitidosCrear);
+  const datos = filtrarCampos(data, CAMPOS_PERMITIDOS);
 
   if (!datos.nombre) {
-    const error = new Error("El nombre del ejercicio es obligatorio");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "El nombre del ejercicio es obligatorio");
   }
 
   const nuevoEjercicio = await Ejercicio.create({
@@ -57,7 +48,7 @@ const listarEjercicios = async (entrenadorId, filtros = {}) => {
     ];
   }
 
-  // ORDENACIÓN (nombre asc por defecto)
+  //  ORDENACIÓN (nombre asc por defecto)
   const sortOption = parseSort(
     sort,
     ["nombre", "grupoMuscular", "createdAt"],
@@ -110,16 +101,14 @@ const obtenerEjercicioPorId = async (entrenadorId, id) => {
   });
 
   if (!ejercicio) {
-    const error = new Error("Ejercicio no encontrado");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Ejercicio no encontrado");
   }
 
   return ejercicio;
 };
 
 const actualizarEjercicio = async (entrenadorId, id, data) => {
-  const datos = filtrarCampos(data, camposPermitidosActualizar);
+  const datos = filtrarCampos(data, CAMPOS_PERMITIDOS);
 
   const ejercicio = await Ejercicio.findOneAndUpdate(
     { _id: id, entrenadorId, eliminado: false },
@@ -128,9 +117,7 @@ const actualizarEjercicio = async (entrenadorId, id, data) => {
   );
 
   if (!ejercicio) {
-    const error = new Error("Ejercicio no encontrado");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Ejercicio no encontrado");
   }
 
   return ejercicio;
@@ -144,9 +131,7 @@ const archivarEjercicio = async (entrenadorId, id) => {
   );
 
   if (!ejercicio) {
-    const error = new Error("Ejercicio no encontrado");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Ejercicio no encontrado");
   }
 
   return ejercicio;

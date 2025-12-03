@@ -1,9 +1,10 @@
 const Cliente = require("./Cliente");
-const filtrarCampos = require("../../utils/filtrarCampos");
+const ApiError = require("../../comun/core/ApiError");
+const filtrarCampos = require("../../comun/utils/filtrarCampos");
 const parseSort = require("../../comun/utils/parseSort");
 
-// Campos permitidos al crear un cliente
-const camposPermitidosCrear = [
+// Campos permitidos para crear/actualizar un cliente
+const CAMPOS_PERMITIDOS = [
   "nombre",
   "apellidos",
   "nombreMostrar",
@@ -26,51 +27,30 @@ const camposPermitidosCrear = [
   "frecuenciaCardiacaReposo",
   "preferencias",
   "etiquetas",
+  "rutinaActiva",
+  "historialRutinas",
 ];
 
-const camposPermitidosActualizar = [
-  "nombre",
-  "apellidos",
-  "nombreMostrar",
-  "correo",
-  "telefono",
-  "fechaNacimiento",
-  "sexo",
-  "fotoPerfilUrl",
-  "objetivoPrincipal",
-  "objetivoSecundario",
-  "descripcionObjetivos",
-  "nivelGeneral",
-  "experienciaDeportiva",
-  "estado",
-  "notas",
-  "pesoInicialKg",
-  "pesoActualKg",
-  "alturaCm",
-  "porcentajeGrasa",
-  "frecuenciaCardiacaReposo",
-  "preferencias",
-  "etiquetas",
-];
+// Crear cliente
+const crearCliente = async (entrenadorId, datos) => {
+  const datosFiltrados = filtrarCampos(datos, CAMPOS_PERMITIDOS);
 
-// Crear cliente: añadimos al entrenador que lo crea
-const crearCliente = async (entrenadorId, data) => {
-  const datos = filtrarCampos(data, camposPermitidosCrear);
-
-  if (!datos.nombre) {
-    const error = new Error("El nombre del cliente es obligatorio");
-    error.statusCode = 400;
-    throw error;
+  if (!datosFiltrados.nombre) {
+    throw new ApiError(400, "El nombre del cliente es obligatorio");
   }
 
+  // Aseguramos que el entrenador creador queda asociado en la relación N:M
+  const entrenadores = [entrenadorId];
+
   const nuevoCliente = await Cliente.create({
-    entrenadores: [entrenadorId], // 👈 aquí
-    ...datos,
+    ...datosFiltrados,
+    entrenadores,
   });
 
   return nuevoCliente;
 };
 
+//  Listar clientes (paginación + search + sort)
 const listarClientes = async (entrenadorId, opciones = {}) => {
   const { estado, page, limit, search, sort } = opciones;
 
@@ -79,16 +59,16 @@ const listarClientes = async (entrenadorId, opciones = {}) => {
     eliminado: false,
   };
 
-  // Filtro por estado
+  // Filtro estado
   if (estado) {
     filtro.estado = estado;
   } else {
     filtro.estado = { $ne: "archivado" };
   }
 
-  // BÚSQUEDA POR TEXTO (nombre, apellidos, nombreMostrar, correo, telefono)
+  // Búsqueda de texto
   if (search && search.trim() !== "") {
-    const regex = new RegExp(search.trim(), "i"); // i = case-insensitive
+    const regex = new RegExp(search.trim(), "i");
     filtro.$or = [
       { nombre: regex },
       { apellidos: regex },
@@ -98,17 +78,16 @@ const listarClientes = async (entrenadorId, opciones = {}) => {
     ];
   }
 
-  // ORDENACIÓN
+  // Ordenación
   const sortOption = parseSort(
     sort,
     ["nombreMostrar", "createdAt", "objetivoPrincipal", "estado"],
-    { createdAt: -1 } // por defecto: más recientes primero
+    { createdAt: -1 }
   );
 
-  // --- PAGINACIÓN OPCIONAL ---
+  // Paginación opcional
   let pageNum = parseInt(page, 10);
   let limitNum = parseInt(limit, 10);
-
   const usarPaginacion = !isNaN(pageNum) && !isNaN(limitNum);
 
   if (!usarPaginacion) {
@@ -138,43 +117,51 @@ const listarClientes = async (entrenadorId, opciones = {}) => {
     },
   };
 };
-const obtenerClientePorId = async (entrenadorId, id) => {
+
+// Obtener cliente por id (validando relación con entrenador)
+const obtenerClientePorId = async (entrenadorId, clienteId) => {
   const cliente = await Cliente.findOne({
-    _id: id,
-    entrenadores: entrenadorId, // 👈
+    _id: clienteId,
+    entrenadores: entrenadorId,
     eliminado: false,
   });
 
   if (!cliente) {
-    const error = new Error("Cliente no encontrado");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Cliente no encontrado");
   }
 
   return cliente;
 };
 
-const actualizarCliente = async (entrenadorId, id, data) => {
-  const datos = filtrarCampos(data, camposPermitidosActualizar);
+// Actualizar cliente (solo campos permitidos)
+const actualizarCliente = async (entrenadorId, clienteId, datos) => {
+  const datosFiltrados = filtrarCampos(datos, CAMPOS_PERMITIDOS);
 
-  const cliente = await Cliente.findOneAndUpdate(
-    { _id: id, entrenadores: entrenadorId, eliminado: false }, // 👈
-    datos,
+  const clienteActualizado = await Cliente.findOneAndUpdate(
+    {
+      _id: clienteId,
+      entrenadores: entrenadorId,
+      eliminado: false,
+    },
+    datosFiltrados,
     { new: true, runValidators: true }
   );
 
-  if (!cliente) {
-    const error = new Error("Cliente no encontrado");
-    error.statusCode = 404;
-    throw error;
+  if (!clienteActualizado) {
+    throw new ApiError(404, "Cliente no encontrado");
   }
 
-  return cliente;
+  return clienteActualizado;
 };
 
-const archivarCliente = async (entrenadorId, id) => {
-  const cliente = await Cliente.findOneAndUpdate(
-    { _id: id, entrenadores: entrenadorId, eliminado: false }, // 👈
+// Soft delete / archivo
+const archivarCliente = async (entrenadorId, clienteId) => {
+  const clienteArchivado = await Cliente.findOneAndUpdate(
+    {
+      _id: clienteId,
+      entrenadores: entrenadorId,
+      eliminado: false,
+    },
     {
       estado: "archivado",
       eliminado: true,
@@ -182,13 +169,11 @@ const archivarCliente = async (entrenadorId, id) => {
     { new: true }
   );
 
-  if (!cliente) {
-    const error = new Error("Cliente no encontrado");
-    error.statusCode = 404;
-    throw error;
+  if (!clienteArchivado) {
+    throw new ApiError(404, "Cliente no encontrado");
   }
 
-  return cliente;
+  return clienteArchivado;
 };
 
 module.exports = {

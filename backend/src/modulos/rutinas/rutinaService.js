@@ -1,8 +1,10 @@
 const Rutina = require("./Rutina");
 const Cliente = require("../clientes/Cliente");
 const filtrarCampos = require("../../comun/utils/filtrarCampos");
-const parseSort = require("../../comun/utils/parseSort")
-const camposPermitidosActualizar = [
+const parseSort = require("../../comun/utils/parseSort");
+const ApiError = require("../../comun/core/ApiError");
+
+const CAMPOS_PERMITIDOS_ACTUALIZAR = [
   "nombre",
   "descripcion",
   "objetivo",
@@ -37,9 +39,7 @@ const crearRutina = async (entrenadorId, data) => {
   } = data;
 
   if (!nombre) {
-    const error = new Error("El nombre de la rutina es obligatorio");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "El nombre de la rutina es obligatorio");
   }
 
   let cliente = null;
@@ -52,11 +52,10 @@ const crearRutina = async (entrenadorId, data) => {
     });
 
     if (!cliente) {
-      const error = new Error(
+      throw new ApiError(
+        404,
         "Cliente no encontrado o no pertenece al entrenador autenticado"
       );
-      error.statusCode = 404;
-      throw error;
     }
   }
 
@@ -110,7 +109,7 @@ const crearRutina = async (entrenadorId, data) => {
     return nuevaRutina;
   } catch (error) {
     if (error.message && error.message.includes("Semana")) {
-      error.statusCode = 400;
+      throw new ApiError(400, error.message);
     }
     throw error;
   }
@@ -138,7 +137,7 @@ const listarRutinas = async (entrenadorId, query = {}) => {
     filtro.esPlantilla = false;
   }
 
-  //  BÚSQUEDA POR TEXTO (nombre, descripcion, objetivo, nivel, tipoSplit, etiquetas)
+  // 🔍 BÚSQUEDA POR TEXTO
   if (search && search.trim() !== "") {
     const regex = new RegExp(search.trim(), "i");
     filtro.$or = [
@@ -151,7 +150,7 @@ const listarRutinas = async (entrenadorId, query = {}) => {
     ];
   }
 
-  //  ORDENACIÓN (por defecto createdAt desc)
+  // ORDENACIÓN (por defecto createdAt desc)
   const sortOption = parseSort(
     sort,
     ["nombre", "createdAt", "objetivo", "nivel", "estado"],
@@ -161,7 +160,6 @@ const listarRutinas = async (entrenadorId, query = {}) => {
   // --- PAGINACIÓN OPCIONAL ---
   let pageNum = parseInt(page, 10);
   let limitNum = parseInt(limit, 10);
-
   const usarPaginacion = !isNaN(pageNum) && !isNaN(limitNum);
 
   if (!usarPaginacion) {
@@ -215,16 +213,14 @@ const obtenerRutinaPorId = async (entrenadorId, id) => {
   }).populate("clienteId", "nombre nombreMostrar estado");
 
   if (!rutina) {
-    const error = new Error("Rutina no encontrada");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Rutina no encontrada");
   }
 
   return rutina;
 };
 
 const actualizarRutina = async (entrenadorId, id, data) => {
-  const datos = filtrarCampos(data, camposPermitidosActualizar);
+  const datos = filtrarCampos(data, CAMPOS_PERMITIDOS_ACTUALIZAR);
 
   try {
     const rutina = await Rutina.findOneAndUpdate(
@@ -234,15 +230,13 @@ const actualizarRutina = async (entrenadorId, id, data) => {
     );
 
     if (!rutina) {
-      const error = new Error("Rutina no encontrada");
-      error.statusCode = 404;
-      throw error;
+      throw new ApiError(404, "Rutina no encontrada");
     }
 
     return rutina;
   } catch (error) {
     if (error.message && error.message.includes("Semana")) {
-      error.statusCode = 400;
+      throw new ApiError(400, error.message);
     }
     throw error;
   }
@@ -260,9 +254,7 @@ const archivarRutina = async (entrenadorId, id) => {
   );
 
   if (!rutina) {
-    const error = new Error("Rutina no encontrada");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Rutina no encontrada");
   }
 
   if (rutina.clienteId) {
@@ -292,9 +284,7 @@ const asignarRutinaACliente = async (entrenadorId, rutinaId, clienteId) => {
   });
 
   if (!rutina) {
-    const error = new Error("Rutina no encontrada para este entrenador");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Rutina no encontrada para este entrenador");
   }
 
   const cliente = await Cliente.findOne({
@@ -304,9 +294,7 @@ const asignarRutinaACliente = async (entrenadorId, rutinaId, clienteId) => {
   });
 
   if (!cliente) {
-    const error = new Error("Cliente no encontrado para este entrenador");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Cliente no encontrado para este entrenador");
   }
 
   cliente.rutinaActiva = rutina._id;
@@ -336,9 +324,7 @@ const quitarRutinaActivaDeCliente = async (entrenadorId, clienteId) => {
   });
 
   if (!cliente) {
-    const error = new Error("Cliente no encontrado para este entrenador");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Cliente no encontrado para este entrenador");
   }
 
   cliente.rutinaActiva = null;
