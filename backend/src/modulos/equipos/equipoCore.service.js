@@ -1,86 +1,41 @@
-const Equipo = require("./equipo.model");
+const Equipo = require("./Equipo");
 const EquipoMiembro = require("./equipoMiembro.model");
 const Cliente = require("../clientes/Cliente");
 const ApiError = require("../../comun/core/ApiError");
+const filtrarCampos = require("../../comun/utils/filtrarCampos");
 const parseSort = require("../../comun/utils/parseSort");
 const POSICIONES_POR_DEPORTE = require("./posicionesPorDeporte");
 
-const validarPosicionParaDeporte = (deporte, posicion) => {
-  if (!posicion) return;
-
-  const deporteKey = String(deporte || "").toLowerCase();
-  const posiciones = POSICIONES_POR_DEPORTE[deporteKey];
-
-  if (!posiciones || !Array.isArray(posiciones)) return;
-
-  const posicionLower = String(posicion).toLowerCase();
-  const esValida = posiciones.some(
-    (p) => p.toLowerCase() === posicionLower
-  );
-
-  if (!esValida) {
-    throw new ApiError(
-      400,
-      `La posición "${posicion}" no es válida para el deporte "${deporte}". ` +
-        `Posiciones permitidas: ${posiciones.join(", ")}`
-    );
-  }
-};
-
-const validarEstadoYLesion = (estado, lesion) => {
-  if (!estado) return;
-
-  if (estado === "activo") return;
-
-  if (estado === "lesionado" || estado === "rehabilitacion") {
-    if (!lesion || !lesion.parteCuerpo || !lesion.tipoLesion) {
-      throw new ApiError(
-        400,
-        'Para estado "lesionado" o "rehabilitacion" debes indicar al menos `parteCuerpo` y `tipoLesion` en `lesion`.'
-      );
-    }
-  }
-};
-
-const obtenerEquipoDeEntrenador = async (entrenadorId, equipoId) => {
-  const equipo = await Equipo.findOne({
-    _id: equipoId,
-    entrenador: entrenadorId,
-  });
-
-  if (!equipo) {
-    throw new ApiError(404, "Equipo no encontrado");
-  }
-
-  return equipo;
-};
-
+const CAMPOS_EQUIPO = ["nombre", "deporte", "descripcion", "activo"];
 
 const crearEquipo = async (entrenadorId, datos) => {
-  const { nombre, deporte, descripcion } = datos;
+  const data = filtrarCampos(datos, CAMPOS_EQUIPO);
 
-  if (!nombre) throw new ApiError(400, "El nombre del equipo es obligatorio");
-  if (!deporte) throw new ApiError(400, "El deporte del equipo es obligatorio");
+  if (!data.nombre) {
+    throw new ApiError(400, "El nombre del equipo es obligatorio");
+  }
 
-  const nuevoEquipo = await Equipo.create({
-    nombre,
-    deporte,
-    descripcion: descripcion || null,
+  if (!data.deporte) {
+    throw new ApiError(400, "El deporte del equipo es obligatorio");
+  }
+
+  const equipo = await Equipo.create({
+    ...data,
     entrenador: entrenadorId,
   });
 
-  return nuevoEquipo;
+  return equipo;
 };
 
 const listarEquipos = async (entrenadorId, opciones = {}) => {
   const { activo, search, sort } = opciones;
 
-  const filtro = { entrenador: entrenadorId };
+  const filtro = {
+    entrenador: entrenadorId,
+  };
 
-  if (typeof activo !== "undefined") {
-    if (activo === "true" || activo === true) filtro.activo = true;
-    if (activo === "false" || activo === false) filtro.activo = false;
-  }
+  if (activo === "true") filtro.activo = true;
+  if (activo === "false") filtro.activo = false;
 
   if (search && search.trim() !== "") {
     const regex = new RegExp(search.trim(), "i");
@@ -97,58 +52,69 @@ const listarEquipos = async (entrenadorId, opciones = {}) => {
     { createdAt: -1 }
   );
 
-  const equipos = await Equipo.find(filtro).sort(sortOption);
+  const equipos = await Equipo.find(filtro).sort(sortOption).lean();
+
   return equipos;
 };
 
-const obtenerEquipoPorId = async (entrenadorId, equipoId, opciones = {}) => {
+const obtenerEquipoDeEntrenador = async (entrenadorId, equipoId, opciones = {}) => {
   const { incluirMiembros = false } = opciones;
 
-  let query = Equipo.findOne({
+  const equipo = await Equipo.findOne({
     _id: equipoId,
     entrenador: entrenadorId,
   });
 
-  if (incluirMiembros) {
-    query = query.populate({
-      path: "miembros",
-      populate: {
-        path: "cliente",
-        select:
-          "nombre apellidos nombreMostrar correo fotoPerfilUrl objetivoPrincipal",
-      },
-    });
+  if (!equipo) {
+    throw new ApiError(404, "Equipo no encontrado para este entrenador");
   }
 
-  const equipo = await query.exec();
+  if (incluirMiembros) {
+    const miembros = await EquipoMiembro.find({
+      equipo: equipo._id,
+      fechaBaja: { $exists: false },
+    })
+      .populate(
+        "cliente",
+        "nombre apellidos nombreMostrar correo fotoPerfilUrl objetivoPrincipal estado"
+      )
+      .lean();
 
-  if (!equipo) {
-    throw new ApiError(404, "Equipo no encontrado");
+    equipo._doc.miembros = miembros;
   }
 
   return equipo;
 };
 
+const obtenerEquipoPorId = async (entrenadorId, equipoId, opciones = {}) => {
+  return obtenerEquipoDeEntrenador(entrenadorId, equipoId, opciones);
+};
 
-const agregarMiembroAEquipo = async (entrenadorId, equipoId, datosMiembro) => {
-  const {
-    clienteId,
-    alturaCm,
-    pesoKg,
-    lateralidad,
-    porcentajeGrasa,
-    posicion,
-    esCapitan,
-    estado,
-    lesion,
-    notas,
-  } = datosMiembro;
+const validarPosicionParaDeporte = (deporte, posicion) => {
+  const lista = POSICIONES_POR_DEPORTE[deporte] || [];
+  if (!lista.length) return;
+  if (!lista.includes(posicion)) {
+    throw new ApiError(
+      400,
+      `La posición "${posicion}" no es válida para el deporte "${deporte}". Posiciones válidas: ${lista.join(
+        ", "
+      )}`
+    );
+  }
+};
+
+const agregarMiembroAEquipo = async (entrenadorId, equipoId, datos) => {
+  const { clienteId, posicion, esCapitan, estado, lesion } = datos;
 
   if (!clienteId) {
-    throw new ApiError(400, "El clienteId es obligatorio");
+    throw new ApiError(400, "clienteId es obligatorio");
   }
 
   const equipo = await obtenerEquipoDeEntrenador(entrenadorId, equipoId);
+
+  if (equipo.activo === false) {
+    throw new ApiError(400, "No se pueden añadir miembros a un equipo inactivo");
+  }
 
   const cliente = await Cliente.findOne({
     _id: clienteId,
@@ -159,91 +125,217 @@ const agregarMiembroAEquipo = async (entrenadorId, equipoId, datosMiembro) => {
   if (!cliente) {
     throw new ApiError(
       404,
-      "Cliente no encontrado o no asociado a este entrenador"
+      "Cliente no encontrado o no pertenece al entrenador autenticado"
     );
   }
 
-  validarPosicionParaDeporte(equipo.deporte, posicion);
-  validarEstadoYLesion(estado, lesion);
+  const yaMiembro = await EquipoMiembro.findOne({
+    equipo: equipo._id,
+    cliente: cliente._id,
+    fechaBaja: { $exists: false },
+  });
 
-  let miembro;
-  try {
-    miembro = await EquipoMiembro.create({
-      equipo: equipo._id,
-      cliente: cliente._id,
-      alturaCm,
-      pesoKg,
-      lateralidad,
-      porcentajeGrasa,
-      posicion,
-      esCapitan: !!esCapitan,
-      estado: estado || "activo",
-      lesion,
-      notas,
-    });
-  } catch (err) {
-    if (err.code === 11000) {
-      throw new ApiError(409, "Este cliente ya forma parte de este equipo");
-    }
-    throw err;
+  if (yaMiembro) {
+    throw new ApiError(
+      400,
+      "Este cliente ya es miembro activo de este equipo"
+    );
   }
 
-  equipo.miembros.push(miembro._id);
-  await equipo.save();
+  if (posicion) {
+    validarPosicionParaDeporte(equipo.deporte, posicion);
+  }
 
-  const miembroConCliente = await EquipoMiembro.findById(miembro._id)
-    .populate(
-      "cliente",
-      "nombre apellidos nombreMostrar correo fotoPerfilUrl objetivoPrincipal"
-    )
-    .exec();
+  if (esCapitan) {
+    const capitanExistente = await EquipoMiembro.findOne({
+      equipo: equipo._id,
+      esCapitan: true,
+      fechaBaja: { $exists: false },
+    });
 
-  return miembroConCliente;
+    if (capitanExistente) {
+      throw new ApiError(
+        400,
+        "Ya existe un capitán activo en este equipo. Desmarca esCapitan o cambia primero el capitán."
+      );
+    }
+  }
+
+  const estadoFinal = estado || "activo";
+  let lesionFinal = null;
+
+  if (estadoFinal === "lesionado" || estadoFinal === "rehabilitacion") {
+    if (!lesion || !lesion.parteCuerpo || !lesion.tipoLesion) {
+      throw new ApiError(
+        400,
+        "Para estado lesionado/rehabilitacion es obligatorio indicar parteCuerpo y tipoLesion"
+      );
+    }
+    lesionFinal = lesion;
+  }
+
+  const miembro = await EquipoMiembro.create({
+    equipo: equipo._id,
+    cliente: cliente._id,
+    alturaCm: datos.alturaCm,
+    pesoKg: datos.pesoKg,
+    porcentajeGrasa: datos.porcentajeGrasa,
+    lateralidad: datos.lateralidad || "diestro",
+    posicion: posicion || null,
+    esCapitan: !!esCapitan,
+    estado: estadoFinal,
+    lesion: lesionFinal,
+    notas: datos.notas || null,
+    fechaAlta: new Date(),
+  });
+
+  await Equipo.updateOne(
+    { _id: equipo._id },
+    { $addToSet: { miembros: miembro._id } }
+  );
+
+  const miembroPopulado = await EquipoMiembro.findById(miembro._id).populate(
+    "cliente",
+    "nombre apellidos nombreMostrar correo fotoPerfilUrl objetivoPrincipal estado"
+  );
+
+  return miembroPopulado;
 };
 
-const listarMiembrosDeEquipo = async (entrenadorId, equipoId) => {
-  await obtenerEquipoDeEntrenador(entrenadorId, equipoId);
+const listarMiembrosDeEquipo = async (entrenadorId, equipoId, opciones = {}) => {
+  const { estado, search, sort, page, limit } = opciones;
 
-  const miembros = await EquipoMiembro.find({
-    equipo: equipoId,
+  const equipo = await obtenerEquipoDeEntrenador(entrenadorId, equipoId);
+
+  const filtro = {
+    equipo: equipo._id,
     fechaBaja: { $exists: false },
-  })
+  };
+
+  if (estado) {
+    filtro.estado = estado;
+  }
+
+  const sortOption = parseSort(
+    sort,
+    ["posicion", "fechaAlta", "createdAt", "estado", "esCapitan"],
+    { esCapitan: -1, createdAt: 1 }
+  );
+
+  let pageNum = parseInt(page, 10);
+  let limitNum = parseInt(limit, 10);
+  const usarPaginacion = !isNaN(pageNum) && !isNaN(limitNum);
+
+  if (!usarPaginacion) {
+    let miembros = await EquipoMiembro.find(filtro)
+      .sort(sortOption)
+      .populate(
+        "cliente",
+        "nombre apellidos nombreMostrar correo fotoPerfilUrl objetivoPrincipal estado"
+      )
+      .lean();
+
+    if (search && search.trim() !== "") {
+      const regex = new RegExp(search.trim(), "i");
+      miembros = miembros.filter((m) => {
+        const c = m.cliente || {};
+        return (
+          regex.test(c.nombre || "") ||
+          regex.test(c.apellidos || "") ||
+          regex.test(c.nombreMostrar || "") ||
+          regex.test(c.correo || "")
+        );
+      });
+    }
+
+    return {
+      miembros,
+      paginacion: null,
+    };
+  }
+
+  const skip = (pageNum - 1) * limitNum;
+
+  let miembros = await EquipoMiembro.find(filtro)
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limitNum)
     .populate(
       "cliente",
-      "nombre apellidos nombreMostrar correo fotoPerfilUrl objetivoPrincipal"
+      "nombre apellidos nombreMostrar correo fotoPerfilUrl objetivoPrincipal estado"
     )
-    .exec();
+    .lean();
 
-  return miembros;
+  const total = await EquipoMiembro.countDocuments(filtro);
+
+  if (search && search.trim() !== "") {
+    const regex = new RegExp(search.trim(), "i");
+    miembros = miembros.filter((m) => {
+      const c = m.cliente || {};
+      return (
+        regex.test(c.nombre || "") ||
+        regex.test(c.apellidos || "") ||
+        regex.test(c.nombreMostrar || "") ||
+        regex.test(c.correo || "")
+      );
+    });
+  }
+
+  const totalPages = Math.ceil(total / limitNum);
+
+  return {
+    miembros,
+    paginacion: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages,
+    },
+  };
 };
 
 const eliminarMiembroDeEquipo = async (entrenadorId, equipoId, miembroId) => {
   const equipo = await obtenerEquipoDeEntrenador(entrenadorId, equipoId);
 
-  const miembro = await EquipoMiembro.findById(miembroId);
-  if (!miembro) {
-    throw new ApiError(404, "Miembro de equipo no encontrado");
-  }
-
-  if (String(miembro.equipo) !== String(equipo._id)) {
-    throw new ApiError(400, "El miembro no pertenece a este equipo");
-  }
-
-  miembro.fechaBaja = new Date();
-  await miembro.save();
-
-  await Equipo.findByIdAndUpdate(equipo._id, {
-    $pull: { miembros: miembro._id },
+  const miembro = await EquipoMiembro.findOne({
+    _id: miembroId,
+    equipo: equipo._id,
+    fechaBaja: { $exists: false },
   });
 
-  return { success: true };
+  if (!miembro) {
+    throw new ApiError(404, "Miembro de equipo no encontrado o ya dado de baja");
+  }
+
+  const ahora = new Date();
+  if (miembro.fechaAlta && miembro.fechaAlta > ahora) {
+    throw new ApiError(
+      400,
+      "La fecha de alta del miembro es posterior a la fecha actual. Revisa los datos."
+    );
+  }
+
+  miembro.fechaBaja = ahora;
+  await miembro.save();
+
+  await Equipo.updateOne(
+    { _id: equipo._id },
+    { $pull: { miembros: miembro._id } }
+  );
+
+  return;
 };
 
 const actualizarEstadoMiembro = async (entrenadorId, miembroId, datos) => {
   const { estado, lesion } = datos;
 
+  if (!estado) {
+    throw new ApiError(400, "El estado es obligatorio");
+  }
+
   const miembro = await EquipoMiembro.findById(miembroId).populate("equipo");
-  if (!miembro) {
+
+  if (!miembro || !miembro.equipo) {
     throw new ApiError(404, "Miembro de equipo no encontrado");
   }
 
@@ -251,31 +343,35 @@ const actualizarEstadoMiembro = async (entrenadorId, miembroId, datos) => {
     throw new ApiError(403, "No tienes permisos sobre este miembro");
   }
 
-  validarEstadoYLesion(estado, lesion);
+  miembro.estado = estado;
 
-  if (estado) miembro.estado = estado;
-
-  if (miembro.estado === "activo") {
-    miembro.lesion = undefined;
-  } else if (
-    miembro.estado === "lesionado" ||
-    miembro.estado === "rehabilitacion"
-  ) {
+  if (estado === "activo") {
+    miembro.lesion = null;
+  } else if (estado === "lesionado" || estado === "rehabilitacion") {
+    if (!lesion || !lesion.parteCuerpo || !lesion.tipoLesion) {
+      throw new ApiError(
+        400,
+        "Para estado lesionado/rehabilitacion es obligatorio indicar parteCuerpo y tipoLesion"
+      );
+    }
     miembro.lesion = lesion;
   }
 
-  await miembro.save();
-  return miembro;
+  const guardado = await miembro.save();
+
+  return guardado;
 };
 
 const actualizarPosicionMiembro = async (entrenadorId, miembroId, datos) => {
   const { posicion } = datos;
+
   if (!posicion) {
     throw new ApiError(400, "La posición es obligatoria");
   }
 
   const miembro = await EquipoMiembro.findById(miembroId).populate("equipo");
-  if (!miembro) {
+
+  if (!miembro || !miembro.equipo) {
     throw new ApiError(404, "Miembro de equipo no encontrado");
   }
 
@@ -286,30 +382,25 @@ const actualizarPosicionMiembro = async (entrenadorId, miembroId, datos) => {
   validarPosicionParaDeporte(miembro.equipo.deporte, posicion);
 
   miembro.posicion = posicion;
-  await miembro.save();
+  const guardado = await miembro.save();
 
-  return miembro;
+  return guardado;
 };
 
-const obtenerPosicionesPorDeporte = (deporte) => {
-  const key = String(deporte || "").toLowerCase();
-  return POSICIONES_POR_DEPORTE[key] || [];
+const obtenerPosicionesPorDeporte = async (deporte) => {
+  const posiciones = POSICIONES_POR_DEPORTE[deporte] || [];
+  return posiciones;
 };
 
 module.exports = {
-  // helpers compartidos
-  obtenerEquipoDeEntrenador,
-
-  // equipos
   crearEquipo,
   listarEquipos,
   obtenerEquipoPorId,
-
+  obtenerEquipoDeEntrenador,
   agregarMiembroAEquipo,
   listarMiembrosDeEquipo,
   eliminarMiembroDeEquipo,
   actualizarEstadoMiembro,
   actualizarPosicionMiembro,
-
   obtenerPosicionesPorDeporte,
 };

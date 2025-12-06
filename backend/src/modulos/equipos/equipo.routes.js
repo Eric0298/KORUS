@@ -1,47 +1,34 @@
-// src/modulos/equipos/equipoRoutes.js
-
 const express = require("express");
 const router = express.Router();
-
-const verificarToken = require("../../comun/infraestructura/middlewares/authMiddleware");
 const validarObjectId = require("../../comun/infraestructura/middlewares/validarObjectId");
 
 const {
   crearEquipo,
   listarEquipos,
   obtenerEquipo,
-
   agregarMiembro,
   listarMiembros,
   eliminarMiembro,
   actualizarEstadoMiembro,
   actualizarPosicionMiembro,
-
-  obtenerPosicionesPorDeporte,
-
   generarRutinasFisicas,
   obtenerCalendarioMiembro,
+  obtenerPosicionesPorDeporte,
 } = require("./equipo.controller");
 
-router.post("/", crearEquipo);
 
+router.get("/posiciones/deporte", obtenerPosicionesPorDeporte);
+
+router.post("/", crearEquipo);
 router.get("/", listarEquipos);
 
-router.get(
-  "/:equipoId",
-  validarObjectId("equipoId"),
-  obtenerEquipo
-);
-
-
-router.get("/posiciones/:deporte", obtenerPosicionesPorDeporte);
+router.get("/:equipoId", validarObjectId("equipoId"), obtenerEquipo);
 
 router.post(
   "/:equipoId/miembros",
   validarObjectId("equipoId"),
   agregarMiembro
 );
-
 
 router.get(
   "/:equipoId/miembros",
@@ -57,19 +44,21 @@ router.delete(
 );
 
 router.patch(
-  "/miembros/:miembroId/estado",
+  "/:equipoId/miembros/:miembroId/estado",
+  validarObjectId("equipoId"),
   validarObjectId("miembroId"),
   actualizarEstadoMiembro
 );
 
 router.patch(
-  "/miembros/:miembroId/posicion",
+  "/:equipoId/miembros/:miembroId/posicion",
+  validarObjectId("equipoId"),
   validarObjectId("miembroId"),
   actualizarPosicionMiembro
 );
 
 router.post(
-  "/:equipoId/rutinas/generar-fisicas",
+  "/:equipoId/rutinas/fisicas/generar",
   validarObjectId("equipoId"),
   generarRutinasFisicas
 );

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const { Schema, model } = mongoose;
 
@@ -14,8 +14,8 @@ const LesionSchema = new Schema(
     },
     gravedad: {
       type: String,
-      enum: ['leve', 'moderada', 'grave'],
-      default: 'leve',
+      enum: ["leve", "moderada", "grave"],
+      default: "leve",
     },
     fechaInicio: {
       type: Date,
@@ -35,7 +35,7 @@ const RutinaAsignadaSchema = new Schema(
   {
     rutina: {
       type: Schema.Types.ObjectId,
-      ref: 'Rutina',
+      ref: "Rutina",
       required: true,
     },
     fechaInicio: {
@@ -48,11 +48,19 @@ const RutinaAsignadaSchema = new Schema(
     diasSemana: [
       {
         type: String,
-        enum: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'],
+        enum: [
+          "lunes",
+          "martes",
+          "miercoles",
+          "jueves",
+          "viernes",
+          "sabado",
+          "domingo",
+        ],
       },
     ],
     hora: {
-      type: String, 
+      type: String,
     },
     notas: {
       type: String,
@@ -60,8 +68,8 @@ const RutinaAsignadaSchema = new Schema(
     },
     origen: {
       type: String,
-      enum: ['equipo', 'individual'],
-      default: 'individual',
+      enum: ["equipo", "individual"],
+      default: "individual",
     },
   },
   { _id: false }
@@ -71,13 +79,15 @@ const EquipoMiembroSchema = new Schema(
   {
     equipo: {
       type: Schema.Types.ObjectId,
-      ref: 'Equipo',
+      ref: "Equipo",
       required: true,
+      index: true,
     },
     cliente: {
       type: Schema.Types.ObjectId,
-      ref: 'Cliente',
+      ref: "Cliente",
       required: true,
+      index: true,
     },
 
     alturaCm: {
@@ -88,8 +98,8 @@ const EquipoMiembroSchema = new Schema(
     },
     lateralidad: {
       type: String,
-      enum: ['diestro', 'zurdo', 'ambidiestro'],
-      default: 'diestro',
+      enum: ["diestro", "zurdo", "ambidiestro"],
+      default: "diestro",
     },
     porcentajeGrasa: {
       type: Number,
@@ -98,17 +108,20 @@ const EquipoMiembroSchema = new Schema(
     posicion: {
       type: String,
       trim: true,
+      index: true,
     },
 
     esCapitan: {
       type: Boolean,
       default: false,
+      index: true,
     },
 
     estado: {
       type: String,
-      enum: ['activo', 'lesionado', 'rehabilitacion'],
-      default: 'activo',
+      enum: ["activo", "lesionado", "rehabilitacion"],
+      default: "activo",
+      index: true,
     },
 
     lesion: LesionSchema,
@@ -118,9 +131,11 @@ const EquipoMiembroSchema = new Schema(
     fechaAlta: {
       type: Date,
       default: Date.now,
+      index: true,
     },
     fechaBaja: {
       type: Date,
+      index: true,
     },
 
     notas: {
@@ -135,9 +150,28 @@ const EquipoMiembroSchema = new Schema(
 
 EquipoMiembroSchema.index(
   { equipo: 1, cliente: 1 },
-  { unique: true }
+  {
+    unique: true,
+    partialFilterExpression: {
+      fechaBaja: { $exists: false },
+    },
+  }
 );
 
-const EquipoMiembro = model('EquipoMiembro', EquipoMiembroSchema);
+EquipoMiembroSchema.index(
+  { equipo: 1, esCapitan: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      esCapitan: true,
+      fechaBaja: { $exists: false },
+    },
+  }
+);
+
+EquipoMiembroSchema.index({ equipo: 1, estado: 1 });
+EquipoMiembroSchema.index({ cliente: 1, estado: 1 });
+
+const EquipoMiembro = model("EquipoMiembro", EquipoMiembroSchema);
 
 module.exports = EquipoMiembro;

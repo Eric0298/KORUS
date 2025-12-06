@@ -2,15 +2,16 @@ const EquipoMiembro = require("./equipoMiembro.model");
 const Cliente = require("../clientes/Cliente");
 const rutinaService = require("../rutinas/rutinaService");
 const ApiError = require("../../comun/core/ApiError");
-
 const { obtenerEquipoDeEntrenador } = require("./equipoCore.service");
 const { obtenerEnfoquesFisicos } = require("./perfilesFisicosPorDeporte");
+
 const construirPlantillaRutinaFisica = (miembro, cliente, equipo) => {
   const posicion = miembro.posicion || "general";
-  const estado = miembro.estado || "activo"; // activo | lesionado | rehabilitacion
+  const estado = miembro.estado || "activo";
   const nivel = cliente.nivelGeneral || "principiante";
   const objetivo = cliente.objetivoPrincipal || "salud_general";
   const deporte = equipo.deporte || "";
+
   const plantilla = {
     enfoque: [],
     volumenSesionesSemana: 3,
@@ -68,7 +69,6 @@ const construirPlantillaRutinaFisica = (miembro, cliente, equipo) => {
       plantilla.volumenSesionesSemana,
       3
     );
-  } else if (nivel === "intermedio") {
   } else if (["avanzado", "competicion", "elite"].includes(nivel)) {
     if (plantilla.intensidad !== "baja") {
       plantilla.intensidad = "alta";
@@ -78,6 +78,7 @@ const construirPlantillaRutinaFisica = (miembro, cliente, equipo) => {
       );
     }
   }
+
   return {
     posicion,
     estado,
@@ -89,6 +90,7 @@ const construirPlantillaRutinaFisica = (miembro, cliente, equipo) => {
     intensidad: plantilla.intensidad,
   };
 };
+
 const generarRutinasFisicasParaEquipo = async (
   entrenadorId,
   equipoId,
@@ -112,6 +114,14 @@ const generarRutinasFisicasParaEquipo = async (
   }
 
   const equipo = await obtenerEquipoDeEntrenador(entrenadorId, equipoId);
+
+  if (equipo.activo === false) {
+    throw new ApiError(
+      400,
+      "No se pueden generar rutinas físicas para un equipo inactivo"
+    );
+  }
+
   const miembros = await EquipoMiembro.find({
     equipo: equipo._id,
     fechaBaja: { $exists: false },
@@ -155,17 +165,17 @@ const generarRutinasFisicasParaEquipo = async (
       clienteId: cliente._id,
       nombre: nombreRutina,
       descripcion: descripcionRutina,
-      objetivo: perfil.objetivo, 
-      nivel: perfil.nivel,       
+      objetivo: perfil.objetivo,
+      nivel: perfil.nivel,
       tipoSplit: tipoSplit || null,
       diasPorSemana: perfil.volumenSesionesSemana,
       semanasTotales: semanasTotales || undefined,
-      dias: [],                 
+      dias: [],
       esPlantilla: false,
       etiquetas,
       fechaInicioUso: fechaInicio,
       fechaFinUso: fechaFin || null,
-      marcarComoActiva: true,    
+      marcarComoActiva: true,
     };
 
     const nuevaRutina = await rutinaService.crearRutina(
@@ -240,7 +250,7 @@ const obtenerCalendarioMiembroEquipo = async (
 };
 
 module.exports = {
-  construirPlantillaRutinaFisica,      
+  construirPlantillaRutinaFisica,
   generarRutinasFisicasParaEquipo,
   obtenerCalendarioMiembroEquipo,
 };
