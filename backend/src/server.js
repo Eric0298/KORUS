@@ -17,6 +17,7 @@ const verificarToken = require("./comun/infraestructura/middlewares/authMiddlewa
 const clienteRoutes = require("./modulos/clientes/clienteRoutes");
 const rutinaRoutes = require("./modulos/rutinas/rutinaRoutes");
 const ejercicioRoutes = require("./modulos/ejercicios/ejercicioRoutes");
+const equipoRoutes= require("./modulos/equipos/equipo.routes");
 
 // Middlewares de errores
 const {
@@ -78,6 +79,8 @@ app.get("/api/entrenador/perfil", verificarToken, (req, res) => {
 app.use("/api/clientes", verificarToken, clienteRoutes);
 app.use("/api/rutinas", verificarToken, rutinaRoutes);
 app.use("/api/ejercicios", verificarToken, ejercicioRoutes);
+app.use("/api/equipos", verificarToken, equipoRoutes);
+
 
 // Middlewares finales
 app.use(notFound);
